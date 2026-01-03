@@ -80,7 +80,6 @@ impl<'a> ComponentInterface for Node<'a> {
                         )
                         .collect()
                 }
-                flex_grow => 1
         })
     }
 }
