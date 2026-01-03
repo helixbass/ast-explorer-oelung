@@ -12,6 +12,16 @@ pub struct Node {
     pub children: Vec<NodeChild>,
 }
 
+impl Node {
+    pub fn new(type_: SmolStr, range: Option<Range>, children: Vec<NodeChild>) -> Self {
+        Self {
+            type_,
+            range,
+            children,
+        }
+    }
+}
+
 pub struct NodeChild {
     pub name: SmolStr,
     pub value: Value,
@@ -27,9 +37,9 @@ pub struct Range {
 
 #[derive(Copy, Clone, Debug)]
 pub enum Location {
-    JustOffset(Offset),
+    // JustOffset(Offset),
     OffsetAndPosition { offset: Offset, position: Position },
-    JustPosition(Position),
+    // JustPosition(Position),
 }
 
 #[derive(Copy, Clone, Debug)]
