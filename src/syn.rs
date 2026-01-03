@@ -4,9 +4,10 @@ use smol_str::ToSmolStr;
 use syn::{
     punctuated::{self, Punctuated},
     spanned::Spanned,
-    token, Attribute, Block, Expr, ExprArray, ExprLit, ExprReference, File, GenericParam, Generics,
-    Ident, Item, ItemConst, ItemFn, Lifetime, Lit, LitStr, Path, PathArguments, PathSegment, QSelf,
-    Signature, Type, TypePath, TypeReference, TypeSlice, Visibility, WhereClause,
+    token, Abi, Attribute, Block, Expr, ExprArray, ExprLit, ExprReference, File, FnArg,
+    GenericParam, Generics, Ident, Item, ItemConst, ItemFn, Lifetime, Lit, LitStr, Path,
+    PathArguments, PathSegment, QSelf, ReturnType, Signature, Type, TypePath, TypeReference,
+    TypeSlice, Variadic, Visibility, WhereClause,
 };
 
 use crate::{Error, Location, Node, NodeChild, Nodes, Parse, Position, Range, Value};
@@ -134,6 +135,18 @@ impl<'a> From<&'a token::And> for Value {
     }
 }
 
+impl<'a> From<&'a token::Async> for Node {
+    fn from(value: &'a token::Async) -> Self {
+        span_only(value, "Async")
+    }
+}
+
+impl<'a> From<&'a token::Async> for Value {
+    fn from(value: &'a token::Async) -> Self {
+        Node::from(value).into()
+    }
+}
+
 impl<'a> From<&'a token::Bracket> for Node {
     fn from(value: &'a token::Bracket) -> Self {
         delim_span_only(&value.span, "Bracket")
@@ -194,6 +207,18 @@ impl<'a> From<&'a token::Eq> for Value {
     }
 }
 
+impl<'a> From<&'a token::Fn> for Node {
+    fn from(value: &'a token::Fn) -> Self {
+        span_only(value, "Fn")
+    }
+}
+
+impl<'a> From<&'a token::Fn> for Value {
+    fn from(value: &'a token::Fn) -> Self {
+        Node::from(value).into()
+    }
+}
+
 impl<'a> From<&'a token::Gt> for Node {
     fn from(value: &'a token::Gt) -> Self {
         span_only(value, "Gt")
@@ -230,6 +255,18 @@ impl<'a> From<&'a token::Mut> for Value {
     }
 }
 
+impl<'a> From<&'a token::Paren> for Node {
+    fn from(value: &'a token::Paren) -> Self {
+        delim_span_only(&value.span, "Paren")
+    }
+}
+
+impl<'a> From<&'a token::Paren> for Value {
+    fn from(value: &'a token::Paren) -> Self {
+        Node::from(value).into()
+    }
+}
+
 impl<'a> From<&'a token::PathSep> for Node {
     fn from(value: &'a token::PathSep) -> Self {
         span_only(value, "PathSep")
@@ -262,6 +299,18 @@ impl<'a> From<&'a token::Semi> for Node {
 
 impl<'a> From<&'a token::Semi> for Value {
     fn from(value: &'a token::Semi) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a token::Unsafe> for Node {
+    fn from(value: &'a token::Unsafe) -> Self {
+        span_only(value, "Unsafe")
+    }
+}
+
+impl<'a> From<&'a token::Unsafe> for Value {
+    fn from(value: &'a token::Unsafe) -> Self {
         Node::from(value).into()
     }
 }
@@ -471,7 +520,24 @@ impl<'a> From<&'a ExprLit> for Value {
 
 impl<'a> From<&'a Signature> for Node {
     fn from(value: &'a Signature) -> Self {
-        unimplemented!()
+        Self::new(
+            "Signature".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("constness".to_smolstr(), from_option(&value.constness)),
+                NodeChild::new("asyncness".to_smolstr(), from_option(&value.asyncness)),
+                NodeChild::new("unsafety".to_smolstr(), from_option(&value.unsafety)),
+                NodeChild::new("abi".to_smolstr(), from_option(&value.abi)),
+                NodeChild::new("fn_token".to_smolstr(), (&value.fn_token).into()),
+                NodeChild::new("ident".to_smolstr(), (&value.ident).into()),
+                NodeChild::new("generics".to_smolstr(), (&value.generics).into()),
+                NodeChild::new("paren_token".to_smolstr(), (&value.paren_token).into()),
+                NodeChild::new("inputs".to_smolstr(), (&value.inputs).into()),
+                NodeChild::new("variadic".to_smolstr(), from_option(&value.variadic)),
+                NodeChild::new("output".to_smolstr(), (&value.output).into()),
+                span_child(value),
+            ],
+        )
     }
 }
 
@@ -625,6 +691,51 @@ impl<'a> From<&'a LitStr> for Node {
 impl<'a> From<&'a LitStr> for Value {
     fn from(value: &'a LitStr) -> Self {
         Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a Abi> for Node {
+    fn from(value: &'a Abi) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<'a> From<&'a Abi> for Value {
+    fn from(value: &'a Abi) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a FnArg> for Node {
+    fn from(value: &'a FnArg) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<'a> From<&'a FnArg> for Value {
+    fn from(value: &'a FnArg) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a Variadic> for Node {
+    fn from(value: &'a Variadic) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<'a> From<&'a Variadic> for Value {
+    fn from(value: &'a Variadic) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a ReturnType> for Value {
+    fn from(value: &'a ReturnType) -> Self {
+        match value {
+            ReturnType::Default => Self::Scalar("Default".to_smolstr()),
+            _ => unimplemented!(),
+        }
     }
 }
 
