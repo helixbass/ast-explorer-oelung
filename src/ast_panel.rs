@@ -169,3 +169,31 @@ impl<'a> ComponentInterface for NodeChildName<'a> {
         })
     }
 }
+
+pub struct Array<'a> {
+    pub values: &'a [ast::Value],
+    pub nesting_level: usize,
+}
+
+impl<'a> Array<'a> {
+    pub fn new(values: &'a [ast::Value], nesting_level: usize) -> Self {
+        assert!(!values.is_empty());
+        Self {
+            values,
+            nesting_level,
+        }
+    }
+}
+
+impl<'a> ComponentInterface for Array<'a> {
+    fn render(&self, _grid: Grid) -> Result<Component<'_>, anyhow::Error> {
+        Ok(soft! {
+            %FlexColumn
+              children => self.values.into_iter().map(|value| -> Result<_, anyhow::Error> {
+                  Ok(soft! {
+                      %Value::new(value, self.nesting_level + 2)
+                  })
+              }).collect::<Result<Vec<_>, _>>()?
+        })
+    }
+}
