@@ -5,7 +5,7 @@ use syn::{
     ItemConst, ItemFn, Signature, Type, TypeReference, Visibility,
 };
 
-use crate::{Error, Location, Node, NodeChild, Parse, Position, Range, Value};
+use crate::{Error, Location, Node, NodeChild, Nodes, Parse, Position, Range, Value};
 
 impl<'a> From<&'a File> for Node {
     fn from(value: &'a File) -> Self {
@@ -299,9 +299,9 @@ fn from_option_string(value: &Option<String>) -> Value {
 
 fn from_slice<TItem>(list: &[TItem]) -> Value
 where
-    for<'a> &'a TItem: Into<Value>,
+    for<'a> &'a TItem: Into<Node>,
 {
-    list.into_iter().map(Into::into).collect::<Vec<_>>().into()
+    list.into_iter().map(Into::into).collect::<Nodes>().into()
 }
 
 fn span_child<TSpanned: Spanned>(value: &TSpanned) -> NodeChild {

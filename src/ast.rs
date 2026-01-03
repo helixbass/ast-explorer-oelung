@@ -1,10 +1,11 @@
+use smallvec::SmallVec;
 use smol_str::{SmolStr, ToSmolStr};
 
 use crate::Error;
 
 pub enum Value {
     Node(Node),
-    Array(Vec<Value>),
+    Array(Nodes),
     Scalar(SmolStr),
 }
 
@@ -14,8 +15,8 @@ impl From<Node> for Value {
     }
 }
 
-impl From<Vec<Value>> for Value {
-    fn from(value: Vec<Value>) -> Self {
+impl From<Nodes> for Value {
+    fn from(value: Nodes) -> Self {
         Self::Array(value)
     }
 }
@@ -37,6 +38,8 @@ impl From<String> for Value {
         Self::Scalar(value.to_smolstr())
     }
 }
+
+pub type Nodes = SmallVec<Node, 10>;
 
 pub struct Node {
     pub type_: SmolStr,
