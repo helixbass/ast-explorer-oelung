@@ -5,7 +5,7 @@ use syn::{
     punctuated::{self, Punctuated},
     spanned::Spanned,
     token, Attribute, Block, Expr, ExprReference, File, GenericParam, Generics, Ident, Item,
-    ItemConst, ItemFn, Signature, Type, TypeReference, Visibility, WhereClause,
+    ItemConst, ItemFn, Lifetime, Signature, Type, TypeReference, Visibility, WhereClause,
 };
 
 use crate::{Error, Location, Node, NodeChild, Nodes, Parse, Position, Range, Value};
@@ -121,6 +121,18 @@ impl<'a> From<&'a Visibility> for Value {
     }
 }
 
+impl<'a> From<&'a token::And> for Node {
+    fn from(value: &'a token::And) -> Self {
+        span_only(value, "And")
+    }
+}
+
+impl<'a> From<&'a token::And> for Value {
+    fn from(value: &'a token::And) -> Self {
+        Node::from(value).into()
+    }
+}
+
 impl<'a> From<&'a token::Colon> for Node {
     fn from(value: &'a token::Colon) -> Self {
         span_only(value, "Colon")
@@ -189,6 +201,18 @@ impl<'a> From<&'a token::Lt> for Node {
 
 impl<'a> From<&'a token::Lt> for Value {
     fn from(value: &'a token::Lt) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a token::Mut> for Node {
+    fn from(value: &'a token::Mut) -> Self {
+        span_only(value, "Mut")
+    }
+}
+
+impl<'a> From<&'a token::Mut> for Value {
+    fn from(value: &'a token::Mut) -> Self {
         Node::from(value).into()
     }
 }
@@ -278,7 +302,17 @@ impl<'a> From<&'a Type> for Value {
 
 impl<'a> From<&'a TypeReference> for Node {
     fn from(value: &'a TypeReference) -> Self {
-        unimplemented!()
+        Self::new(
+            "TypeReference".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("and_token".to_smolstr(), (&value.and_token).into()),
+                NodeChild::new("lifetime".to_smolstr(), from_option(&value.lifetime)),
+                NodeChild::new("mutability".to_smolstr(), from_option(&value.mutability)),
+                NodeChild::new("elem".to_smolstr(), (&*value.elem).into()),
+                span_child(value),
+            ],
+        )
     }
 }
 
@@ -359,6 +393,18 @@ impl<'a> From<&'a WhereClause> for Node {
 
 impl<'a> From<&'a WhereClause> for Value {
     fn from(value: &'a WhereClause) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a Lifetime> for Node {
+    fn from(value: &'a Lifetime) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<'a> From<&'a Lifetime> for Value {
+    fn from(value: &'a Lifetime) -> Self {
         Node::from(value).into()
     }
 }
