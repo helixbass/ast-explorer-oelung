@@ -4,9 +4,9 @@ use smol_str::ToSmolStr;
 use syn::{
     punctuated::{self, Punctuated},
     spanned::Spanned,
-    token, Attribute, Block, Expr, ExprArray, ExprReference, File, GenericParam, Generics, Ident,
-    Item, ItemConst, ItemFn, Lifetime, Path, PathArguments, PathSegment, QSelf, Signature, Type,
-    TypePath, TypeReference, TypeSlice, Visibility, WhereClause,
+    token, Attribute, Block, Expr, ExprArray, ExprLit, ExprReference, File, GenericParam, Generics,
+    Ident, Item, ItemConst, ItemFn, Lifetime, Lit, LitStr, Path, PathArguments, PathSegment, QSelf,
+    Signature, Type, TypePath, TypeReference, TypeSlice, Visibility, WhereClause,
 };
 
 use crate::{Error, Location, Node, NodeChild, Nodes, Parse, Position, Range, Value};
@@ -394,6 +394,7 @@ impl<'a> From<&'a Expr> for Node {
         match value {
             Expr::Reference(expr) => expr.into(),
             Expr::Array(expr) => expr.into(),
+            Expr::Lit(expr) => expr.into(),
             _ => unimplemented!(),
         }
     }
@@ -444,6 +445,26 @@ impl<'a> From<&'a ExprArray> for Node {
 
 impl<'a> From<&'a ExprArray> for Value {
     fn from(value: &'a ExprArray) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a ExprLit> for Node {
+    fn from(value: &'a ExprLit) -> Self {
+        Self::new(
+            "ExprLit".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("attrs".to_smolstr(), from_slice(&value.attrs)),
+                NodeChild::new("lit".to_smolstr(), (&value.lit).into()),
+                span_child(value),
+            ],
+        )
+    }
+}
+
+impl<'a> From<&'a ExprLit> for Value {
+    fn from(value: &'a ExprLit) -> Self {
         Node::from(value).into()
     }
 }
@@ -569,6 +590,41 @@ impl<'a> From<&'a PathArguments> for Value {
             PathArguments::None => Self::Scalar("PathArguments::None".to_smolstr()),
             _ => unimplemented!(),
         }
+    }
+}
+
+impl<'a> From<&'a Lit> for Node {
+    fn from(value: &'a Lit) -> Self {
+        match value {
+            Lit::Str(lit) => lit.into(),
+            _ => unimplemented!(),
+        }
+    }
+}
+
+impl<'a> From<&'a Lit> for Value {
+    fn from(value: &'a Lit) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a LitStr> for Node {
+    fn from(value: &'a LitStr) -> Self {
+        Self::new(
+            "LitStr".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("value".to_smolstr(), value.value().into()),
+                NodeChild::new("suffix".to_smolstr(), value.suffix().into()),
+                span_child(value),
+            ],
+        )
+    }
+}
+
+impl<'a> From<&'a LitStr> for Value {
+    fn from(value: &'a LitStr) -> Self {
+        Node::from(value).into()
     }
 }
 
