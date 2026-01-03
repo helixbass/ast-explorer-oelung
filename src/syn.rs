@@ -6,8 +6,8 @@ use syn::{
     spanned::Spanned,
     token, Abi, Attribute, Block, Expr, ExprArray, ExprForLoop, ExprLit, ExprReference, File,
     FnArg, GenericParam, Generics, Ident, Item, ItemConst, ItemFn, Label, Lifetime, Lit, LitStr,
-    Pat, Path, PathArguments, PathSegment, QSelf, ReturnType, Signature, Stmt, Type, TypePath,
-    TypeReference, TypeSlice, Variadic, Visibility, WhereClause,
+    Pat, PatTuple, Path, PathArguments, PathSegment, QSelf, ReturnType, Signature, Stmt, Type,
+    TypePath, TypeReference, TypeSlice, Variadic, Visibility, WhereClause,
 };
 
 use crate::{Error, Location, Node, NodeChild, Nodes, Parse, Position, Range, Value};
@@ -834,12 +834,36 @@ impl<'a> From<&'a Label> for Value {
 
 impl<'a> From<&'a Pat> for Node {
     fn from(value: &'a Pat) -> Self {
-        unimplemented!()
+        match value {
+            Pat::Tuple(pat) => pat.into(),
+            _ => unimplemented!(),
+        }
     }
 }
 
 impl<'a> From<&'a Pat> for Value {
     fn from(value: &'a Pat) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a PatTuple> for Node {
+    fn from(value: &'a PatTuple) -> Self {
+        Self::new(
+            "PatTuple".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("attrs".to_smolstr(), from_slice(&value.attrs)),
+                NodeChild::new("paren_token".to_smolstr(), (&value.paren_token).into()),
+                NodeChild::new("elems".to_smolstr(), (&value.elems).into()),
+                span_child(value),
+            ],
+        )
+    }
+}
+
+impl<'a> From<&'a PatTuple> for Value {
+    fn from(value: &'a PatTuple) -> Self {
         Node::from(value).into()
     }
 }
