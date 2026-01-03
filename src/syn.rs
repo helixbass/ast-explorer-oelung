@@ -343,6 +343,7 @@ impl<'a> From<&'a TypeSlice> for Node {
             Some(value.span().into()),
             vec![
                 NodeChild::new("bracket_token".to_smolstr(), (&value.bracket_token).into()),
+                NodeChild::new("elem".to_smolstr(), (&*value.elem).into()),
                 span_child(value),
             ],
         )
