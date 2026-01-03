@@ -1,12 +1,12 @@
-use proc_macro2::{DelimSpan, LineColumn, Span};
+use proc_macro2::{extra::DelimSpan, LineColumn, Span};
 use smallvec::{smallvec, SmallVec};
 use smol_str::ToSmolStr;
 use syn::{
     punctuated::{self, Punctuated},
     spanned::Spanned,
     token, Attribute, Block, Expr, ExprReference, File, GenericParam, Generics, Ident, Item,
-    ItemConst, ItemFn, Lifetime, Signature, Type, TypeReference, TypeSlice, Visibility,
-    WhereClause,
+    ItemConst, ItemFn, Lifetime, Path, QSelf, Signature, Type, TypePath, TypeReference, TypeSlice,
+    Visibility, WhereClause,
 };
 
 use crate::{Error, Location, Node, NodeChild, Nodes, Parse, Position, Range, Value};
@@ -303,6 +303,7 @@ impl<'a> From<&'a Type> for Node {
         match value {
             Type::Reference(type_) => type_.into(),
             Type::Slice(type_) => type_.into(),
+            Type::Path(type_) => type_.into(),
             _ => unimplemented!(),
         }
     }
@@ -352,6 +353,26 @@ impl<'a> From<&'a TypeSlice> for Node {
 
 impl<'a> From<&'a TypeSlice> for Value {
     fn from(value: &'a TypeSlice) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a TypePath> for Node {
+    fn from(value: &'a TypePath) -> Self {
+        Self::new(
+            "TypePath".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("qself".to_smolstr(), from_option(&value.qself)),
+                NodeChild::new("path".to_smolstr(), (&value.path).into()),
+                span_child(value),
+            ],
+        )
+    }
+}
+
+impl<'a> From<&'a TypePath> for Value {
+    fn from(value: &'a TypePath) -> Self {
         Node::from(value).into()
     }
 }
@@ -439,6 +460,30 @@ impl<'a> From<&'a Lifetime> for Node {
 
 impl<'a> From<&'a Lifetime> for Value {
     fn from(value: &'a Lifetime) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a QSelf> for Node {
+    fn from(value: &'a QSelf) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<'a> From<&'a QSelf> for Value {
+    fn from(value: &'a QSelf) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a Path> for Node {
+    fn from(value: &'a Path) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<'a> From<&'a Path> for Value {
+    fn from(value: &'a Path) -> Self {
         Node::from(value).into()
     }
 }
