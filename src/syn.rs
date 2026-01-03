@@ -1006,7 +1006,7 @@ fn from_line_column(value: &LineColumn) -> Value {
         "LineColumn".to_smolstr(),
         None,
         vec![
-            NodeChild::new("line".to_smolstr(), format!("{}", value.line + 1).into()),
+            NodeChild::new("line".to_smolstr(), format!("{}", value.line).into()),
             NodeChild::new("column".to_smolstr(), format!("{}", value.column).into()),
         ],
     ))

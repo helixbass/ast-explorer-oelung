@@ -19,4 +19,8 @@ impl<'a> ComponentInterface for &'a AstExplorer {
             %AstPanel::new(&self.tree)
         })
     }
+
+    fn flex_grow(&self) -> Option<f64> {
+        Some(1.0)
+    }
 }

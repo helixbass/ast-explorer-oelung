@@ -1,4 +1,5 @@
 use crossterm::event::{Event, EventStream, KeyCode};
+use indoc::indoc;
 use oelung::{soft, Renderer};
 use oelung_lantern::{generate_sender, mpsc::Sender};
 use tokio::sync::mpsc::channel;
@@ -14,25 +15,26 @@ async fn main() -> Result<(), anyhow::Error> {
 
     listen_to_crossterm_events(CrosstermSender::from(sender.clone()));
 
-    let text = r#"
-const TIPS: &[&str] = &[
-    "Click on any AST node with a '+' to expand it",
+    let text = indoc!(
+        r#"
+            const TIPS: &[&str] = &[
+                "Click on any AST node with a '+' to expand it",
 
-    "Hovering over a node highlights the \
-    corresponding location in the source code",
+                "Hovering over a node highlights the \
+                corresponding location in the source code",
 
-    "Shift click on an AST node to expand the whole subtree",
-];
+                "Shift click on an AST node to expand the whole subtree",
+            ];
 
-pub fn print_tips() {
-    for (i, tip) in TIPS.iter().enumerate() {
-        println!("Tip {}: {}.", i, tip);
-    }
-}
-    "#;
+            pub fn print_tips() {
+                for (i, tip) in TIPS.iter().enumerate() {
+                    println!("Tip {}: {}.", i, tip);
+                }
+            }
+        "#
+    );
     let parser = Parser::new();
     let explorer = AstExplorer::new(parser.parse(text)?);
-    // eprintln!("explorer: {explorer:#?}");
 
     render_screen(&mut renderer, &explorer)?;
 

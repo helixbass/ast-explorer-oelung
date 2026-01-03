@@ -135,6 +135,7 @@ impl<'a> ComponentInterface for NodeChild<'a> {
         Ok(match &self.node_child.value {
             ast::Value::Scalar(value) => soft! {
                 %Text children => [
+                  %InitialSpaces::new(self.nesting_level + 1)
                   %NodeChildName::new(&self.node_child.name)
                   %Text " "
                   %Text value
