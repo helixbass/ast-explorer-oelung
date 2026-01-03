@@ -1,11 +1,12 @@
-use proc_macro2::{LineColumn, Span};
+use proc_macro2::{DelimSpan, LineColumn, Span};
 use smallvec::{smallvec, SmallVec};
 use smol_str::ToSmolStr;
 use syn::{
     punctuated::{self, Punctuated},
     spanned::Spanned,
     token, Attribute, Block, Expr, ExprReference, File, GenericParam, Generics, Ident, Item,
-    ItemConst, ItemFn, Lifetime, Signature, Type, TypeReference, Visibility, WhereClause,
+    ItemConst, ItemFn, Lifetime, Signature, Type, TypeReference, TypeSlice, Visibility,
+    WhereClause,
 };
 
 use crate::{Error, Location, Node, NodeChild, Nodes, Parse, Position, Range, Value};
@@ -129,6 +130,18 @@ impl<'a> From<&'a token::And> for Node {
 
 impl<'a> From<&'a token::And> for Value {
     fn from(value: &'a token::And) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a token::Bracket> for Node {
+    fn from(value: &'a token::Bracket) -> Self {
+        delim_span_only(&value.span, "Bracket")
+    }
+}
+
+impl<'a> From<&'a token::Bracket> for Value {
+    fn from(value: &'a token::Bracket) -> Self {
         Node::from(value).into()
     }
 }
@@ -289,6 +302,7 @@ impl<'a> From<&'a Type> for Node {
     fn from(value: &'a Type) -> Self {
         match value {
             Type::Reference(type_) => type_.into(),
+            Type::Slice(type_) => type_.into(),
             _ => unimplemented!(),
         }
     }
@@ -318,6 +332,25 @@ impl<'a> From<&'a TypeReference> for Node {
 
 impl<'a> From<&'a TypeReference> for Value {
     fn from(value: &'a TypeReference) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a TypeSlice> for Node {
+    fn from(value: &'a TypeSlice) -> Self {
+        Self::new(
+            "TypeSlice".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("bracket_token".to_smolstr(), (&value.bracket_token).into()),
+                span_child(value),
+            ],
+        )
+    }
+}
+
+impl<'a> From<&'a TypeSlice> for Value {
+    fn from(value: &'a TypeSlice) -> Self {
         Node::from(value).into()
     }
 }
@@ -471,6 +504,17 @@ fn span_child<TSpanned: Spanned>(value: &TSpanned) -> NodeChild {
 
 fn span_only<TSpanned: Spanned>(value: &TSpanned, name: &str) -> Node {
     Node::new(name.to_smolstr(), None, vec![span_child(value)])
+}
+
+fn delim_span_only(value: &DelimSpan, name: &str) -> Node {
+    Node::new(
+        name.to_smolstr(),
+        None,
+        vec![
+            NodeChild::new("open".to_smolstr(), from_span(&value.open())),
+            NodeChild::new("close".to_smolstr(), from_span(&value.close())),
+        ],
+    )
 }
 
 fn from_span(value: &Span) -> Value {
