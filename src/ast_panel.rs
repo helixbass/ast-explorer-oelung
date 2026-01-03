@@ -155,7 +155,22 @@ impl<'a> ComponentInterface for NodeChild<'a> {
                     ]
                 },
             },
-            _ => unimplemented!(),
+            ast::Value::Node(node) => soft! {
+                %FlexColumn children => [
+                  %Text children => [
+                    %InitialSpaces::new(self.nesting_level + 1)
+                    %NodeChildName::new(&self.node_child.name)
+                    %Text " "
+                    %Text &node.type_
+                    %Text " {"
+                  ]
+                  %Node::new(node, self.nesting_level + 1, false)
+                  %Text children => [
+                    %InitialSpaces::new(self.nesting_level + 1)
+                    %Text "}"
+                  ]
+                ]
+            },
         })
     }
 }
