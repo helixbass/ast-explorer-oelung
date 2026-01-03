@@ -5,8 +5,8 @@ use syn::{
     punctuated::{self, Punctuated},
     spanned::Spanned,
     token, Attribute, Block, Expr, ExprReference, File, GenericParam, Generics, Ident, Item,
-    ItemConst, ItemFn, Lifetime, Path, QSelf, Signature, Type, TypePath, TypeReference, TypeSlice,
-    Visibility, WhereClause,
+    ItemConst, ItemFn, Lifetime, Path, PathArguments, PathSegment, QSelf, Signature, Type,
+    TypePath, TypeReference, TypeSlice, Visibility, WhereClause,
 };
 
 use crate::{Error, Location, Node, NodeChild, Nodes, Parse, Position, Range, Value};
@@ -226,6 +226,18 @@ impl<'a> From<&'a token::Mut> for Node {
 
 impl<'a> From<&'a token::Mut> for Value {
     fn from(value: &'a token::Mut) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a token::PathSep> for Node {
+    fn from(value: &'a token::PathSep) -> Self {
+        span_only(value, "PathSep")
+    }
+}
+
+impl<'a> From<&'a token::PathSep> for Value {
+    fn from(value: &'a token::PathSep) -> Self {
         Node::from(value).into()
     }
 }
@@ -478,13 +490,53 @@ impl<'a> From<&'a QSelf> for Value {
 
 impl<'a> From<&'a Path> for Node {
     fn from(value: &'a Path) -> Self {
-        unimplemented!()
+        Self::new(
+            "Path".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new(
+                    "leading_colon".to_smolstr(),
+                    from_option(&value.leading_colon),
+                ),
+                NodeChild::new("segments".to_smolstr(), (&value.segments).into()),
+                span_child(value),
+            ],
+        )
     }
 }
 
 impl<'a> From<&'a Path> for Value {
     fn from(value: &'a Path) -> Self {
         Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a PathSegment> for Node {
+    fn from(value: &'a PathSegment) -> Self {
+        Self::new(
+            "PathSegment".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("ident".to_smolstr(), (&value.ident).into()),
+                NodeChild::new("arguments".to_smolstr(), (&value.arguments).into()),
+                span_child(value),
+            ],
+        )
+    }
+}
+
+impl<'a> From<&'a PathSegment> for Value {
+    fn from(value: &'a PathSegment) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a PathArguments> for Value {
+    fn from(value: &'a PathArguments) -> Self {
+        match value {
+            PathArguments::None => Self::Scalar("PathArguments::None".to_smolstr()),
+            _ => unimplemented!(),
+        }
     }
 }
 
