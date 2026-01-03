@@ -100,15 +100,21 @@ impl<'a> From<&'a ItemFn> for Value {
     }
 }
 
-impl<'a> From<&'a Visibility> for Node {
-    fn from(value: &'a Visibility) -> Self {
-        unimplemented!()
-    }
-}
-
 impl<'a> From<&'a Visibility> for Value {
     fn from(value: &'a Visibility) -> Self {
-        Node::from(value).into()
+        match value {
+            Visibility::Public(pub_token) => Node::new(
+                "Public".to_smolstr(),
+                Some(value.span().into()),
+                vec![
+                    NodeChild::new("pub_token".to_smolstr(), pub_token.into()),
+                    span_child(value),
+                ],
+            )
+            .into(),
+            Visibility::Inherited => Self::Scalar("Inherited".to_smolstr()),
+            _ => unimplemented!(),
+        }
     }
 }
 
@@ -144,6 +150,18 @@ impl<'a> From<&'a token::Eq> for Node {
 
 impl<'a> From<&'a token::Eq> for Value {
     fn from(value: &'a token::Eq) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a token::Pub> for Node {
+    fn from(value: &'a token::Pub) -> Self {
+        span_only(value, "Pub")
+    }
+}
+
+impl<'a> From<&'a token::Pub> for Value {
+    fn from(value: &'a token::Pub) -> Self {
         Node::from(value).into()
     }
 }
