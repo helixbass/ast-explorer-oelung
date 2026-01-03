@@ -123,11 +123,26 @@ impl<'a> ComponentInterface for NodeChild<'a> {
             ast::Value::Array(list) => match list.is_empty() {
                 true => soft! {
                     %Text children => [
+                      %InitialSpaces::new(self.nesting_level + 1)
                       %NodeChildName::new(&self.node_child.name)
                       %Text " []"
                     ]
                 },
-                false => unimplemented!(),
+                false => soft! {
+                    %FlexColumn children => [
+                        %Text children => [
+                          %InitialSpaces::new(self.nesting_level + 1)
+                          %NodeChildName::new(&self.node_child.name)
+                          %Text " ["
+                        ]
+                        %Array::new(list, self.nesting_level)
+                        %Text children => [
+                          %InitialSpaces::new(self.nesting_level + 1)
+                          %Text "]"
+                        ]
+
+                    ]
+                },
             },
             _ => unimplemented!(),
         })
