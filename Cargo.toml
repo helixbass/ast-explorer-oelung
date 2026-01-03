@@ -8,3 +8,4 @@ proc-macro2 = { version = "1.0.104", features = ["span-locations"] }
 smallvec = { version = "2.0.0-alpha.12" }
 smol_str = "0.3.4"
 syn = { version = "2.0.112", features = ["full"] }
+thiserror = "2.0.17"

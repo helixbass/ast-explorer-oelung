@@ -1,5 +1,7 @@
 use smol_str::{SmolStr, ToSmolStr};
 
+use crate::Error;
+
 pub enum Value {
     Node(Node),
     Array(Vec<Value>),
@@ -84,4 +86,8 @@ pub struct Position {
     pub line: usize,
     /// 0-based
     pub column: usize,
+}
+
+pub trait Parse {
+    fn parse(&self, text: &str) -> Result<Node, Error>;
 }

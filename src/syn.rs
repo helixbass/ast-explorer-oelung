@@ -5,7 +5,7 @@ use syn::{
     ItemConst, ItemFn, Signature, Type, TypeReference, Visibility,
 };
 
-use crate::{Location, Node, NodeChild, Position, Range, Value};
+use crate::{Error, Location, Node, NodeChild, Parse, Position, Range, Value};
 
 impl<'a> From<&'a File> for Node {
     fn from(value: &'a File) -> Self {
@@ -332,4 +332,14 @@ fn from_line_column(value: &LineColumn) -> Value {
             NodeChild::new("column".to_smolstr(), format!("{}", value.column).into()),
         ],
     ))
+}
+
+pub struct Parser;
+
+impl Parse for Parser {
+    fn parse(&self, text: &str) -> Result<Node, Error> {
+        Ok(Node::from(
+            &syn::parse_file(text).map_err(|err| Error::Parse(err.to_smolstr()))?,
+        ))
+    }
 }
