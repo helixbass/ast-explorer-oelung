@@ -4,10 +4,10 @@ use smol_str::ToSmolStr;
 use syn::{
     punctuated::{self, Punctuated},
     spanned::Spanned,
-    token, Abi, Attribute, Block, Expr, ExprArray, ExprLit, ExprReference, File, FnArg,
-    GenericParam, Generics, Ident, Item, ItemConst, ItemFn, Lifetime, Lit, LitStr, Path,
-    PathArguments, PathSegment, QSelf, ReturnType, Signature, Stmt, Type, TypePath, TypeReference,
-    TypeSlice, Variadic, Visibility, WhereClause,
+    token, Abi, Attribute, Block, Expr, ExprArray, ExprForLoop, ExprLit, ExprReference, File,
+    FnArg, GenericParam, Generics, Ident, Item, ItemConst, ItemFn, Label, Lifetime, Lit, LitStr,
+    Pat, Path, PathArguments, PathSegment, QSelf, ReturnType, Signature, Stmt, Type, TypePath,
+    TypeReference, TypeSlice, Variadic, Visibility, WhereClause,
 };
 
 use crate::{Error, Location, Node, NodeChild, Nodes, Parse, Position, Range, Value};
@@ -227,6 +227,18 @@ impl<'a> From<&'a token::Fn> for Node {
 
 impl<'a> From<&'a token::Fn> for Value {
     fn from(value: &'a token::Fn) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a token::For> for Node {
+    fn from(value: &'a token::For) -> Self {
+        span_only(value, "For")
+    }
+}
+
+impl<'a> From<&'a token::For> for Value {
+    fn from(value: &'a token::For) -> Self {
         Node::from(value).into()
     }
 }
@@ -456,6 +468,7 @@ impl<'a> From<&'a Expr> for Node {
             Expr::Reference(expr) => expr.into(),
             Expr::Array(expr) => expr.into(),
             Expr::Lit(expr) => expr.into(),
+            Expr::ForLoop(expr) => expr.into(),
             _ => unimplemented!(),
         }
     }
@@ -526,6 +539,28 @@ impl<'a> From<&'a ExprLit> for Node {
 
 impl<'a> From<&'a ExprLit> for Value {
     fn from(value: &'a ExprLit) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a ExprForLoop> for Node {
+    fn from(value: &'a ExprForLoop) -> Self {
+        Self::new(
+            "ExprForLoop".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("attrs".to_smolstr(), from_slice(&value.attrs)),
+                NodeChild::new("label".to_smolstr(), from_option(&value.label)),
+                NodeChild::new("for_token".to_smolstr(), (&value.for_token).into()),
+                NodeChild::new("pat".to_smolstr(), (&*value.pat).into()),
+                span_child(value),
+            ],
+        )
+    }
+}
+
+impl<'a> From<&'a ExprForLoop> for Value {
+    fn from(value: &'a ExprForLoop) -> Self {
         Node::from(value).into()
     }
 }
@@ -781,6 +816,30 @@ impl<'a> From<&'a Stmt> for Node {
 
 impl<'a> From<&'a Stmt> for Value {
     fn from(value: &'a Stmt) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a Label> for Node {
+    fn from(value: &'a Label) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<'a> From<&'a Label> for Value {
+    fn from(value: &'a Label) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a Pat> for Node {
+    fn from(value: &'a Pat) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<'a> From<&'a Pat> for Value {
+    fn from(value: &'a Pat) -> Self {
         Node::from(value).into()
     }
 }
