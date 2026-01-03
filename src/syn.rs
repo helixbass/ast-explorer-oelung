@@ -6,8 +6,8 @@ use syn::{
     spanned::Spanned,
     token, Abi, Attribute, Block, Expr, ExprArray, ExprForLoop, ExprLit, ExprReference, File,
     FnArg, GenericParam, Generics, Ident, Item, ItemConst, ItemFn, Label, Lifetime, Lit, LitStr,
-    Pat, PatTuple, Path, PathArguments, PathSegment, QSelf, ReturnType, Signature, Stmt, Type,
-    TypePath, TypeReference, TypeSlice, Variadic, Visibility, WhereClause,
+    Pat, PatIdent, PatTuple, Path, PathArguments, PathSegment, QSelf, ReturnType, Signature, Stmt,
+    Type, TypePath, TypeReference, TypeSlice, Variadic, Visibility, WhereClause,
 };
 
 use crate::{Error, Location, Node, NodeChild, Nodes, Parse, Position, Range, Value};
@@ -311,6 +311,18 @@ impl<'a> From<&'a token::Pub> for Node {
 
 impl<'a> From<&'a token::Pub> for Value {
     fn from(value: &'a token::Pub) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a token::Ref> for Node {
+    fn from(value: &'a token::Ref) -> Self {
+        span_only(value, "Ref")
+    }
+}
+
+impl<'a> From<&'a token::Ref> for Value {
+    fn from(value: &'a token::Ref) -> Self {
         Node::from(value).into()
     }
 }
@@ -836,6 +848,7 @@ impl<'a> From<&'a Pat> for Node {
     fn from(value: &'a Pat) -> Self {
         match value {
             Pat::Tuple(pat) => pat.into(),
+            Pat::Ident(pat) => pat.into(),
             _ => unimplemented!(),
         }
     }
@@ -864,6 +877,40 @@ impl<'a> From<&'a PatTuple> for Node {
 
 impl<'a> From<&'a PatTuple> for Value {
     fn from(value: &'a PatTuple) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a PatIdent> for Node {
+    fn from(value: &'a PatIdent) -> Self {
+        Self::new(
+            "PatIdent".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("attrs".to_smolstr(), from_slice(&value.attrs)),
+                NodeChild::new("by_ref".to_smolstr(), from_option(&value.by_ref)),
+                NodeChild::new("mutability".to_smolstr(), from_option(&value.mutability)),
+                NodeChild::new("subpat".to_smolstr(), from_option(&value.subpat)),
+                span_child(value),
+            ],
+        )
+    }
+}
+
+impl<'a> From<&'a PatIdent> for Value {
+    fn from(value: &'a PatIdent) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a (token::At, Box<Pat>)> for Node {
+    fn from(value: &'a (token::At, Box<Pat>)) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<'a> From<&'a (token::At, Box<Pat>)> for Value {
+    fn from(value: &'a (token::At, Box<Pat>)) -> Self {
         Node::from(value).into()
     }
 }
