@@ -4,8 +4,8 @@ use smol_str::ToSmolStr;
 use syn::{
     punctuated::{self, Punctuated},
     spanned::Spanned,
-    token, Attribute, Block, Expr, ExprReference, File, Generics, Ident, Item, ItemConst, ItemFn,
-    Signature, Type, TypeReference, Visibility,
+    token, Attribute, Block, Expr, ExprReference, File, GenericParam, Generics, Ident, Item,
+    ItemConst, ItemFn, Signature, Type, TypeReference, Visibility,
 };
 
 use crate::{Error, Location, Node, NodeChild, Nodes, Parse, Position, Range, Value};
@@ -121,18 +121,6 @@ impl<'a> From<&'a Visibility> for Value {
     }
 }
 
-impl<'a> From<&'a token::Const> for Node {
-    fn from(value: &'a token::Const) -> Self {
-        span_only(value, "Const")
-    }
-}
-
-impl<'a> From<&'a token::Const> for Value {
-    fn from(value: &'a token::Const) -> Self {
-        Node::from(value).into()
-    }
-}
-
 impl<'a> From<&'a token::Colon> for Node {
     fn from(value: &'a token::Colon) -> Self {
         span_only(value, "Colon")
@@ -141,6 +129,30 @@ impl<'a> From<&'a token::Colon> for Node {
 
 impl<'a> From<&'a token::Colon> for Value {
     fn from(value: &'a token::Colon) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a token::Comma> for Node {
+    fn from(value: &'a token::Comma) -> Self {
+        span_only(value, "Comma")
+    }
+}
+
+impl<'a> From<&'a token::Comma> for Value {
+    fn from(value: &'a token::Comma) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a token::Const> for Node {
+    fn from(value: &'a token::Const) -> Self {
+        span_only(value, "Const")
+    }
+}
+
+impl<'a> From<&'a token::Const> for Value {
+    fn from(value: &'a token::Const) -> Self {
         Node::from(value).into()
     }
 }
@@ -306,6 +318,18 @@ impl<'a> From<&'a Block> for Node {
 
 impl<'a> From<&'a Block> for Value {
     fn from(value: &'a Block) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a GenericParam> for Node {
+    fn from(value: &'a GenericParam) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<'a> From<&'a GenericParam> for Value {
+    fn from(value: &'a GenericParam) -> Self {
         Node::from(value).into()
     }
 }
