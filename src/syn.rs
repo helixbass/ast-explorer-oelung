@@ -1,8 +1,11 @@
 use proc_macro2::{LineColumn, Span};
+use smallvec::{smallvec, SmallVec};
 use smol_str::ToSmolStr;
 use syn::{
-    spanned::Spanned, token, Attribute, Block, Expr, ExprReference, File, Generics, Ident, Item,
-    ItemConst, ItemFn, Signature, Type, TypeReference, Visibility,
+    punctuated::{self, Punctuated},
+    spanned::Spanned,
+    token, Attribute, Block, Expr, ExprReference, File, Generics, Ident, Item, ItemConst, ItemFn,
+    Signature, Type, TypeReference, Visibility,
 };
 
 use crate::{Error, Location, Node, NodeChild, Nodes, Parse, Position, Range, Value};
@@ -216,7 +219,7 @@ impl<'a> From<&'a Generics> for Node {
             Some(value.span().into()),
             vec![
                 NodeChild::new("lt_token".to_smolstr(), from_option(&value.lt_token)),
-                unimplemented!(),
+                NodeChild::new("params".to_smolstr(), (&value.params).into()),
                 span_child(value),
             ],
         )
@@ -304,6 +307,27 @@ impl<'a> From<&'a Block> for Node {
 impl<'a> From<&'a Block> for Value {
     fn from(value: &'a Block) -> Self {
         Node::from(value).into()
+    }
+}
+
+impl<'a, TItem, TPunctuation> From<&'a Punctuated<TItem, TPunctuation>> for Value
+where
+    for<'b> &'b TItem: Into<Node>,
+    for<'b> &'b TPunctuation: Into<Node>,
+{
+    fn from(value: &'a Punctuated<TItem, TPunctuation>) -> Self {
+        value
+            .pairs()
+            .flat_map(|pair| -> SmallVec<_, 10> {
+                match pair {
+                    punctuated::Pair::Punctuated(item, punctuation) => {
+                        smallvec![item.into(), punctuation.into(),]
+                    }
+                    punctuated::Pair::End(item) => smallvec![item.into(),],
+                }
+            })
+            .collect::<Nodes>()
+            .into()
     }
 }
 
