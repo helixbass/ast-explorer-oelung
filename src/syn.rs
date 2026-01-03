@@ -1,6 +1,9 @@
 use proc_macro2::{LineColumn, Span};
 use smol_str::ToSmolStr;
-use syn::{spanned::Spanned, token, Attribute, File, Ident, Item, ItemConst, Visibility};
+use syn::{
+    spanned::Spanned, token, Attribute, Expr, ExprReference, File, Generics, Ident, Item,
+    ItemConst, Type, TypeReference, Visibility,
+};
 
 use crate::{Location, Node, NodeChild, Position, Range, Value};
 
@@ -56,6 +59,11 @@ impl<'a> From<&'a ItemConst> for Node {
                 NodeChild::new("vis".to_smolstr(), (&value.vis).into()),
                 NodeChild::new("const_token".to_smolstr(), (&value.const_token).into()),
                 NodeChild::new("ident".to_smolstr(), (&value.ident).into()),
+                NodeChild::new("generics".to_smolstr(), (&value.generics).into()),
+                NodeChild::new("colon_token".to_smolstr(), (&value.colon_token).into()),
+                NodeChild::new("ty".to_smolstr(), (&*value.ty).into()),
+                NodeChild::new("eq_token".to_smolstr(), (&value.eq_token).into()),
+                NodeChild::new("expr".to_smolstr(), (&*value.expr).into()),
                 span_child(value),
             ],
         )
@@ -92,6 +100,30 @@ impl<'a> From<&'a token::Const> for Value {
     }
 }
 
+impl<'a> From<&'a token::Colon> for Node {
+    fn from(value: &'a token::Colon) -> Self {
+        span_only(value, "Colon")
+    }
+}
+
+impl<'a> From<&'a token::Colon> for Value {
+    fn from(value: &'a token::Colon) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a token::Eq> for Node {
+    fn from(value: &'a token::Eq) -> Self {
+        span_only(value, "Eq")
+    }
+}
+
+impl<'a> From<&'a token::Eq> for Value {
+    fn from(value: &'a token::Eq) -> Self {
+        Node::from(value).into()
+    }
+}
+
 impl<'a> From<&'a Ident> for Node {
     fn from(value: &'a Ident) -> Self {
         Self::new(
@@ -107,6 +139,72 @@ impl<'a> From<&'a Ident> for Node {
 
 impl<'a> From<&'a Ident> for Value {
     fn from(value: &'a Ident) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a Generics> for Node {
+    fn from(value: &'a Generics) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<'a> From<&'a Generics> for Value {
+    fn from(value: &'a Generics) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a Type> for Node {
+    fn from(value: &'a Type) -> Self {
+        match value {
+            Type::Reference(type_) => type_.into(),
+            _ => unimplemented!(),
+        }
+    }
+}
+
+impl<'a> From<&'a Type> for Value {
+    fn from(value: &'a Type) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a TypeReference> for Node {
+    fn from(value: &'a TypeReference) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<'a> From<&'a TypeReference> for Value {
+    fn from(value: &'a TypeReference) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a Expr> for Node {
+    fn from(value: &'a Expr) -> Self {
+        match value {
+            Expr::Reference(expr) => expr.into(),
+            _ => unimplemented!(),
+        }
+    }
+}
+
+impl<'a> From<&'a Expr> for Value {
+    fn from(value: &'a Expr) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a ExprReference> for Node {
+    fn from(value: &'a ExprReference) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<'a> From<&'a ExprReference> for Value {
+    fn from(value: &'a ExprReference) -> Self {
         Node::from(value).into()
     }
 }
