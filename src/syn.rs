@@ -94,7 +94,14 @@ impl<'a> From<&'a token::Const> for Value {
 
 impl<'a> From<&'a Ident> for Node {
     fn from(value: &'a Ident) -> Self {
-        unimplemented!()
+        Self::new(
+            "Ident".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("to_string".to_smolstr(), value.to_string().into()),
+                span_child(value),
+            ],
+        )
     }
 }
 
