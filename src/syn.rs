@@ -216,6 +216,7 @@ impl<'a> From<&'a Generics> for Node {
             Some(value.span().into()),
             vec![
                 NodeChild::new("lt_token".to_smolstr(), from_option(&value.lt_token)),
+                unimplemented!(),
                 span_child(value),
             ],
         )
