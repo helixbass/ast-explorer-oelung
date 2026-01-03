@@ -1,6 +1,6 @@
 use proc_macro2::{LineColumn, Span};
 use smol_str::ToSmolStr;
-use syn::{spanned::Spanned, token, Attribute, File, Item, ItemConst, Visibility};
+use syn::{spanned::Spanned, token, Attribute, File, Ident, Item, ItemConst, Visibility};
 
 use crate::{Location, Node, NodeChild, Position, Range, Value};
 
@@ -55,6 +55,7 @@ impl<'a> From<&'a ItemConst> for Node {
                 NodeChild::new("attrs".to_smolstr(), from_slice(&value.attrs)),
                 NodeChild::new("vis".to_smolstr(), (&value.vis).into()),
                 NodeChild::new("const_token".to_smolstr(), (&value.const_token).into()),
+                NodeChild::new("ident".to_smolstr(), (&value.ident).into()),
                 span_child(value),
             ],
         )
@@ -87,6 +88,18 @@ impl<'a> From<&'a token::Const> for Node {
 
 impl<'a> From<&'a token::Const> for Value {
     fn from(value: &'a token::Const) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a Ident> for Node {
+    fn from(value: &'a Ident) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<'a> From<&'a Ident> for Value {
+    fn from(value: &'a Ident) -> Self {
         Node::from(value).into()
     }
 }
