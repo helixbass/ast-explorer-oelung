@@ -5,7 +5,7 @@ use syn::{
     punctuated::{self, Punctuated},
     spanned::Spanned,
     token, Attribute, Block, Expr, ExprReference, File, GenericParam, Generics, Ident, Item,
-    ItemConst, ItemFn, Signature, Type, TypeReference, Visibility,
+    ItemConst, ItemFn, Signature, Type, TypeReference, Visibility, WhereClause,
 };
 
 use crate::{Error, Location, Node, NodeChild, Nodes, Parse, Position, Range, Value};
@@ -169,6 +169,18 @@ impl<'a> From<&'a token::Eq> for Value {
     }
 }
 
+impl<'a> From<&'a token::Gt> for Node {
+    fn from(value: &'a token::Gt) -> Self {
+        span_only(value, "Gt")
+    }
+}
+
+impl<'a> From<&'a token::Gt> for Value {
+    fn from(value: &'a token::Gt) -> Self {
+        Node::from(value).into()
+    }
+}
+
 impl<'a> From<&'a token::Lt> for Node {
     fn from(value: &'a token::Lt) -> Self {
         span_only(value, "Lt")
@@ -232,6 +244,11 @@ impl<'a> From<&'a Generics> for Node {
             vec![
                 NodeChild::new("lt_token".to_smolstr(), from_option(&value.lt_token)),
                 NodeChild::new("params".to_smolstr(), (&value.params).into()),
+                NodeChild::new("gt_token".to_smolstr(), from_option(&value.gt_token)),
+                NodeChild::new(
+                    "where_clause".to_smolstr(),
+                    from_option(&value.where_clause),
+                ),
                 span_child(value),
             ],
         )
@@ -330,6 +347,18 @@ impl<'a> From<&'a GenericParam> for Node {
 
 impl<'a> From<&'a GenericParam> for Value {
     fn from(value: &'a GenericParam) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a WhereClause> for Node {
+    fn from(value: &'a WhereClause) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<'a> From<&'a WhereClause> for Value {
+    fn from(value: &'a WhereClause) -> Self {
         Node::from(value).into()
     }
 }
