@@ -406,7 +406,17 @@ impl<'a> From<&'a Expr> for Value {
 
 impl<'a> From<&'a ExprReference> for Node {
     fn from(value: &'a ExprReference) -> Self {
-        unimplemented!()
+        Self::new(
+            "ExprReference".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("attrs".to_smolstr(), from_slice(&value.attrs)),
+                NodeChild::new("and_token".to_smolstr(), (&value.and_token).into()),
+                NodeChild::new("mutability".to_smolstr(), from_option(&value.mutability)),
+                NodeChild::new("expr".to_smolstr(), (&*value.expr).into()),
+                span_child(value),
+            ],
+        )
     }
 }
 
