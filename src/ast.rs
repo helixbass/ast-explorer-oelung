@@ -30,6 +30,12 @@ impl<'a> From<&'a String> for Value {
     }
 }
 
+impl From<String> for Value {
+    fn from(value: String) -> Self {
+        Self::Scalar(value.to_smolstr())
+    }
+}
+
 pub struct Node {
     pub type_: SmolStr,
     pub range: Option<Range>,

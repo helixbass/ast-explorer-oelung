@@ -1,6 +1,6 @@
-use proc_macro2::Span;
+use proc_macro2::{LineColumn, Span};
 use smol_str::ToSmolStr;
-use syn::{spanned::Spanned, Attribute, File};
+use syn::{spanned::Spanned, Attribute, File, Item};
 
 use crate::{Location, Node, NodeChild, Position, Range, Value};
 
@@ -12,6 +12,8 @@ impl<'a> From<&'a File> for Node {
             vec![
                 NodeChild::new("shebang".to_smolstr(), from_option_string(&value.shebang)),
                 NodeChild::new("attrs".to_smolstr(), from_slice(&value.attrs)),
+                NodeChild::new("items".to_smolstr(), from_slice(&value.items)),
+                span_child(value),
             ],
         )
     }
@@ -25,6 +27,18 @@ impl<'a> From<&'a Attribute> for Node {
 
 impl<'a> From<&'a Attribute> for Value {
     fn from(value: &'a Attribute) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a Item> for Node {
+    fn from(value: &'a Item) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<'a> From<&'a Item> for Value {
+    fn from(value: &'a Item) -> Self {
         Node::from(value).into()
     }
 }
@@ -62,4 +76,30 @@ where
     for<'a> &'a TItem: Into<Value>,
 {
     list.into_iter().map(Into::into).collect::<Vec<_>>().into()
+}
+
+fn span_child<TSpanned: Spanned>(value: &TSpanned) -> NodeChild {
+    NodeChild::new("span".to_smolstr(), from_span(&value.span()))
+}
+
+fn from_span(value: &Span) -> Value {
+    Value::Node(Node::new(
+        "Span".to_smolstr(),
+        None,
+        vec![
+            NodeChild::new("start".to_smolstr(), from_line_column(&value.start())),
+            NodeChild::new("end".to_smolstr(), from_line_column(&value.end())),
+        ],
+    ))
+}
+
+fn from_line_column(value: &LineColumn) -> Value {
+    Value::Node(Node::new(
+        "LineColumn".to_smolstr(),
+        None,
+        vec![
+            NodeChild::new("line".to_smolstr(), format!("{}", value.line + 1).into()),
+            NodeChild::new("column".to_smolstr(), format!("{}", value.column).into()),
+        ],
+    ))
 }
