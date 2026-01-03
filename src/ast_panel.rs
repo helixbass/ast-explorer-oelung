@@ -55,7 +55,10 @@ impl<'a> ComponentInterface for Node<'a> {
                         )
                         .chain(
                             [soft! {
-                                %Text "}"
+                                %Text children => [
+                                  %InitialSpaces::new(self.nesting_level)
+                                  %Text "}"
+                                ]
                             }]
                         )
                         .collect()
@@ -109,6 +112,15 @@ impl<'a> NodeChild<'a> {
 
 impl<'a> ComponentInterface for NodeChild<'a> {
     fn render(&self, _grid: Grid) -> Result<Component<'_>, anyhow::Error> {
-        unimplemented!()
+        Ok(match &self.node_child.value {
+            ast::Value::Scalar(value) => soft! {
+                %Text children => [
+                  %NodeChildName::new(&self.node_child.name)
+                  %Text " "
+                  %Text value
+                ]
+            },
+            _ => unimplemented!(),
+        })
     }
 }
