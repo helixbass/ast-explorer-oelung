@@ -7,14 +7,20 @@ use crate::ast;
 
 const SPACES_PER_NESTING_LEVEL: usize = 4;
 
-pub struct AstPanel {
-    pub tree: ast::Node,
+pub struct AstPanel<'a> {
+    pub tree: &'a ast::Node,
 }
 
-impl<'a> ComponentInterface for &'a AstPanel {
+impl<'a> AstPanel<'a> {
+    pub fn new(tree: &'a ast::Node) -> Self {
+        Self { tree }
+    }
+}
+
+impl<'a> ComponentInterface for AstPanel<'a> {
     fn render(&self, _grid: Grid) -> Result<Component<'_>, anyhow::Error> {
         Ok(soft! {
-            %Node::new(&self.tree, 0, true)
+            %Node::new(self.tree, 0, true)
         })
     }
 }

@@ -1,0 +1,21 @@
+use oelung::{anyhow, soft, Component, ComponentInterface, Grid};
+
+use crate::{AstPanel, Node};
+
+pub struct AstExplorer {
+    pub tree: Node,
+}
+
+impl AstExplorer {
+    pub fn new(tree: Node) -> Self {
+        Self { tree }
+    }
+}
+
+impl<'a> ComponentInterface for &'a AstExplorer {
+    fn render(&self, _grid: Grid) -> Result<Component<'_>, anyhow::Error> {
+        Ok(soft! {
+            %AstPanel::new(&self.tree)
+        })
+    }
+}
