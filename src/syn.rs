@@ -4,8 +4,8 @@ use smol_str::ToSmolStr;
 use syn::{
     punctuated::{self, Punctuated},
     spanned::Spanned,
-    token, Attribute, Block, Expr, ExprReference, File, GenericParam, Generics, Ident, Item,
-    ItemConst, ItemFn, Lifetime, Path, PathArguments, PathSegment, QSelf, Signature, Type,
+    token, Attribute, Block, Expr, ExprArray, ExprReference, File, GenericParam, Generics, Ident,
+    Item, ItemConst, ItemFn, Lifetime, Path, PathArguments, PathSegment, QSelf, Signature, Type,
     TypePath, TypeReference, TypeSlice, Visibility, WhereClause,
 };
 
@@ -393,6 +393,7 @@ impl<'a> From<&'a Expr> for Node {
     fn from(value: &'a Expr) -> Self {
         match value {
             Expr::Reference(expr) => expr.into(),
+            Expr::Array(expr) => expr.into(),
             _ => unimplemented!(),
         }
     }
@@ -422,6 +423,27 @@ impl<'a> From<&'a ExprReference> for Node {
 
 impl<'a> From<&'a ExprReference> for Value {
     fn from(value: &'a ExprReference) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a ExprArray> for Node {
+    fn from(value: &'a ExprArray) -> Self {
+        Self::new(
+            "ExprArray".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("attrs".to_smolstr(), from_slice(&value.attrs)),
+                NodeChild::new("bracket_token".to_smolstr(), (&value.bracket_token).into()),
+                NodeChild::new("elems".to_smolstr(), (&value.elems).into()),
+                span_child(value),
+            ],
+        )
+    }
+}
+
+impl<'a> From<&'a ExprArray> for Value {
+    fn from(value: &'a ExprArray) -> Self {
         Node::from(value).into()
     }
 }
