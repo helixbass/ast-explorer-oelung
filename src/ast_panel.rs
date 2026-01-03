@@ -124,3 +124,24 @@ impl<'a> ComponentInterface for NodeChild<'a> {
         })
     }
 }
+
+pub struct NodeChildName<'a> {
+    pub name: &'a str,
+}
+
+impl<'a> NodeChildName<'a> {
+    pub fn new(name: &'a str) -> Self {
+        Self { name }
+    }
+}
+
+impl<'a> ComponentInterface for NodeChildName<'a> {
+    fn render(&self, _grid: Grid) -> Result<Component<'_>, anyhow::Error> {
+        Ok(soft! {
+            %Text children => [
+              %Text self.name
+              %Text ":"
+            ]
+        })
+    }
+}
