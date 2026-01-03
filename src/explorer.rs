@@ -2,6 +2,7 @@ use oelung::{anyhow, soft, Component, ComponentInterface, Grid};
 
 use crate::{AstPanel, Node};
 
+#[derive(Debug)]
 pub struct AstExplorer {
     pub tree: Node,
 }

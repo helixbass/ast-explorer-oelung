@@ -32,6 +32,7 @@ pub fn print_tips() {
     "#;
     let parser = Parser::new();
     let explorer = AstExplorer::new(parser.parse(text)?);
+    // eprintln!("explorer: {explorer:#?}");
 
     render_screen(&mut renderer, &explorer)?;
 

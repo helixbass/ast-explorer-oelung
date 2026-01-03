@@ -3,6 +3,7 @@ use smol_str::{SmolStr, ToSmolStr};
 
 use crate::Error;
 
+#[derive(Debug)]
 pub enum Value {
     Node(Node),
     Array(Nodes),
@@ -41,6 +42,7 @@ impl From<String> for Value {
 
 pub type Nodes = SmallVec<Node, 10>;
 
+#[derive(Debug)]
 pub struct Node {
     pub type_: SmolStr,
     pub range: Option<Range>,
@@ -57,6 +59,7 @@ impl Node {
     }
 }
 
+#[derive(Debug)]
 pub struct NodeChild {
     pub name: SmolStr,
     pub value: Value,
