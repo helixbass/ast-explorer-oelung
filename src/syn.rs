@@ -6,7 +6,7 @@ use syn::{
     spanned::Spanned,
     token, Abi, Attribute, Block, Expr, ExprArray, ExprLit, ExprReference, File, FnArg,
     GenericParam, Generics, Ident, Item, ItemConst, ItemFn, Lifetime, Lit, LitStr, Path,
-    PathArguments, PathSegment, QSelf, ReturnType, Signature, Type, TypePath, TypeReference,
+    PathArguments, PathSegment, QSelf, ReturnType, Signature, Stmt, Type, TypePath, TypeReference,
     TypeSlice, Variadic, Visibility, WhereClause,
 };
 
@@ -143,6 +143,18 @@ impl<'a> From<&'a token::Async> for Node {
 
 impl<'a> From<&'a token::Async> for Value {
     fn from(value: &'a token::Async) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a token::Brace> for Node {
+    fn from(value: &'a token::Brace) -> Self {
+        delim_span_only(&value.span, "Brace")
+    }
+}
+
+impl<'a> From<&'a token::Brace> for Value {
+    fn from(value: &'a token::Brace) -> Self {
         Node::from(value).into()
     }
 }
@@ -549,7 +561,15 @@ impl<'a> From<&'a Signature> for Value {
 
 impl<'a> From<&'a Block> for Node {
     fn from(value: &'a Block) -> Self {
-        unimplemented!()
+        Self::new(
+            "Block".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("brace_token".to_smolstr(), (&value.brace_token).into()),
+                NodeChild::new("stmts".to_smolstr(), from_slice(&value.stmts)),
+                span_child(value),
+            ],
+        )
     }
 }
 
@@ -736,6 +756,32 @@ impl<'a> From<&'a ReturnType> for Value {
             ReturnType::Default => Self::Scalar("Default".to_smolstr()),
             _ => unimplemented!(),
         }
+    }
+}
+
+impl<'a> From<&'a Stmt> for Node {
+    fn from(value: &'a Stmt) -> Self {
+        match value {
+            Stmt::Expr(stmt, semi) => match semi {
+                None => stmt.into(),
+                Some(semi) => Self::new(
+                    "Expr".to_smolstr(),
+                    Some(value.span().into()),
+                    vec![
+                        NodeChild::new("expr".to_smolstr(), stmt.into()),
+                        NodeChild::new("semi".to_smolstr(), semi.into()),
+                        span_child(value),
+                    ],
+                ),
+            },
+            _ => unimplemented!(),
+        }
+    }
+}
+
+impl<'a> From<&'a Stmt> for Value {
+    fn from(value: &'a Stmt) -> Self {
+        Node::from(value).into()
     }
 }
 
