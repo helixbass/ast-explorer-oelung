@@ -1,8 +1,8 @@
 use proc_macro2::{LineColumn, Span};
 use smol_str::ToSmolStr;
 use syn::{
-    spanned::Spanned, token, Attribute, Expr, ExprReference, File, Generics, Ident, Item,
-    ItemConst, Type, TypeReference, Visibility,
+    spanned::Spanned, token, Attribute, Block, Expr, ExprReference, File, Generics, Ident, Item,
+    ItemConst, ItemFn, Signature, Type, TypeReference, Visibility,
 };
 
 use crate::{Location, Node, NodeChild, Position, Range, Value};
@@ -38,6 +38,7 @@ impl<'a> From<&'a Item> for Node {
     fn from(value: &'a Item) -> Self {
         match value {
             Item::Const(item) => item.into(),
+            Item::Fn(item) => item.into(),
             _ => unimplemented!(),
         }
     }
@@ -64,6 +65,7 @@ impl<'a> From<&'a ItemConst> for Node {
                 NodeChild::new("ty".to_smolstr(), (&*value.ty).into()),
                 NodeChild::new("eq_token".to_smolstr(), (&value.eq_token).into()),
                 NodeChild::new("expr".to_smolstr(), (&*value.expr).into()),
+                NodeChild::new("semi_token".to_smolstr(), (&value.semi_token).into()),
                 span_child(value),
             ],
         )
@@ -72,6 +74,28 @@ impl<'a> From<&'a ItemConst> for Node {
 
 impl<'a> From<&'a ItemConst> for Value {
     fn from(value: &'a ItemConst) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a ItemFn> for Node {
+    fn from(value: &'a ItemFn) -> Self {
+        Self::new(
+            "ItemFn".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("attrs".to_smolstr(), from_slice(&value.attrs)),
+                NodeChild::new("vis".to_smolstr(), (&value.vis).into()),
+                NodeChild::new("sig".to_smolstr(), (&value.sig).into()),
+                NodeChild::new("block".to_smolstr(), (&*value.block).into()),
+                span_child(value),
+            ],
+        )
+    }
+}
+
+impl<'a> From<&'a ItemFn> for Value {
+    fn from(value: &'a ItemFn) -> Self {
         Node::from(value).into()
     }
 }
@@ -120,6 +144,18 @@ impl<'a> From<&'a token::Eq> for Node {
 
 impl<'a> From<&'a token::Eq> for Value {
     fn from(value: &'a token::Eq) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a token::Semi> for Node {
+    fn from(value: &'a token::Semi) -> Self {
+        span_only(value, "Semi")
+    }
+}
+
+impl<'a> From<&'a token::Semi> for Value {
+    fn from(value: &'a token::Semi) -> Self {
         Node::from(value).into()
     }
 }
@@ -205,6 +241,30 @@ impl<'a> From<&'a ExprReference> for Node {
 
 impl<'a> From<&'a ExprReference> for Value {
     fn from(value: &'a ExprReference) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a Signature> for Node {
+    fn from(value: &'a Signature) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<'a> From<&'a Signature> for Value {
+    fn from(value: &'a Signature) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a Block> for Node {
+    fn from(value: &'a Block) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<'a> From<&'a Block> for Value {
+    fn from(value: &'a Block) -> Self {
         Node::from(value).into()
     }
 }
