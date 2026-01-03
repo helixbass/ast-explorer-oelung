@@ -1,4 +1,4 @@
 pub mod ast;
 pub mod syn;
 
-pub use ast::{Location, Node, Offset, Position, Range, Value};
+pub use ast::{Location, Node, NodeChild, Offset, Position, Range, Value};
