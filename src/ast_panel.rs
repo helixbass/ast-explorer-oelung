@@ -120,6 +120,15 @@ impl<'a> ComponentInterface for NodeChild<'a> {
                   %Text value
                 ]
             },
+            ast::Value::Array(list) => match list.is_empty() {
+                true => soft! {
+                    %Text children => [
+                      %NodeChildName::new(&self.node_child.name)
+                      %Text " []"
+                    ]
+                },
+                false => unimplemented!(),
+            },
             _ => unimplemented!(),
         })
     }
