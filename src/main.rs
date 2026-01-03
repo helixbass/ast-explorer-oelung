@@ -49,7 +49,7 @@ pub fn print_tips() {
 
 fn render_screen(renderer: &mut Renderer, explorer: &AstExplorer) -> Result<(), anyhow::Error> {
     renderer.render(soft! {
-      %Text
+      %FlexColumn
         children => [
           %explorer
           %Text " (hit q to quit)"
