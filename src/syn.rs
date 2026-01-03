@@ -154,6 +154,18 @@ impl<'a> From<&'a token::Eq> for Value {
     }
 }
 
+impl<'a> From<&'a token::Lt> for Node {
+    fn from(value: &'a token::Lt) -> Self {
+        span_only(value, "Lt")
+    }
+}
+
+impl<'a> From<&'a token::Lt> for Value {
+    fn from(value: &'a token::Lt) -> Self {
+        Node::from(value).into()
+    }
+}
+
 impl<'a> From<&'a token::Pub> for Node {
     fn from(value: &'a token::Pub) -> Self {
         span_only(value, "Pub")
@@ -199,7 +211,14 @@ impl<'a> From<&'a Ident> for Value {
 
 impl<'a> From<&'a Generics> for Node {
     fn from(value: &'a Generics) -> Self {
-        unimplemented!()
+        Self::new(
+            "Generics".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("lt_token".to_smolstr(), from_option(&value.lt_token)),
+                span_child(value),
+            ],
+        )
     }
 }
 
@@ -350,6 +369,16 @@ fn from_line_column(value: &LineColumn) -> Value {
             NodeChild::new("column".to_smolstr(), format!("{}", value.column).into()),
         ],
     ))
+}
+
+fn from_option<TValue>(value: &Option<TValue>) -> Value
+where
+    for<'a> &'a TValue: Into<Value>,
+{
+    match value.as_ref() {
+        None => Value::Scalar("None".to_smolstr()),
+        Some(value) => value.into(),
+    }
 }
 
 pub struct Parser {}
