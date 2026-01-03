@@ -1,5 +1,6 @@
 use oelung::{anyhow, soft, Component, ComponentInterface, Grid};
 use smallvec::SmallVec;
+use smol_str::{SmolStr, SmolStrBuilder};
 
 use crate::ast;
 
@@ -22,7 +23,7 @@ pub struct Node<'a> {
     pub nesting_level: usize,
 }
 
-impl<a> Node<'a> {
+impl<'a> Node<'a> {
     pub fn new(node: &'a ast::Node, nesting_level: usize) -> Self {
         Self {
             node,
@@ -65,6 +66,34 @@ impl<'a> ComponentInterface for Node<'a> {
                         .collect()
                 }
                 flex_grow => 1
+        })
+    }
+}
+
+pub struct InitialSpaces {
+    pub text: SmolStr,
+}
+
+impl InitialSpaces {
+    pub fn new(nesting_level: usize) -> Self {
+        Self {
+            text: {
+                let mut text = SmolStrBuilder::default();
+                for _ in 0..nesting_level {
+                    for _ in 0..SPACES_PER_NESTING_LEVEL {
+                        text.push(' ');
+                    }
+                }
+                text.finish()
+            },
+        }
+    }
+}
+
+impl ComponentInterface for InitialSpaces {
+    fn render(&self, _grid: Grid) -> Result<Component<'_>, anyhow::Error> {
+        Ok(soft! {
+            %Text &self.text
         })
     }
 }
