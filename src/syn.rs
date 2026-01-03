@@ -334,7 +334,13 @@ fn from_line_column(value: &LineColumn) -> Value {
     ))
 }
 
-pub struct Parser;
+pub struct Parser {}
+
+impl Parser {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
 
 impl Parse for Parser {
     fn parse(&self, text: &str) -> Result<Node, Error> {
