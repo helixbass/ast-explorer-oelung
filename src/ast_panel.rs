@@ -41,14 +41,13 @@ impl<'a> ComponentInterface for Node<'a> {
                         soft! {
                             %Text
                               children => [
-                                %InitialSpaces::new(self.nesting_level)
                                 %Text &self.node.type_
                                 %Text " {"
                               ]
                         },
                     ].into_iter()
                         .chain(
-                            self.node.children.iter().map(|child| {
+                            self.node.children.iter().map(|child| -> Result<_, anyhow::Error> {
                                 Ok(soft! {
                                     %NodeChild::new(child, self.nesting_level)
                                 })
@@ -56,11 +55,7 @@ impl<'a> ComponentInterface for Node<'a> {
                         )
                         .chain(
                             [soft! {
-                                %Text
-                                  children => [
-                                    %InitialSpaces::new(self.nesting_level)
-                                    %Text "}"
-                                  ]
+                                %Text "}"
                             }]
                         )
                         .collect()
@@ -95,5 +90,25 @@ impl ComponentInterface for InitialSpaces {
         Ok(soft! {
             %Text &self.text
         })
+    }
+}
+
+pub struct NodeChild<'a> {
+    pub node_child: &'a ast::NodeChild,
+    pub nesting_level: usize,
+}
+
+impl<'a> NodeChild<'a> {
+    pub fn new(node_child: &'a ast::NodeChild, nesting_level: usize) -> Self {
+        Self {
+            node_child,
+            nesting_level,
+        }
+    }
+}
+
+impl<'a> ComponentInterface for NodeChild<'a> {
+    fn render(&self, _grid: Grid) -> Result<Component<'_>, anyhow::Error> {
+        unimplemented!()
     }
 }
