@@ -1,6 +1,7 @@
 use oelung::{anyhow, soft, Component, ComponentInterface, Grid};
 use smallvec::SmallVec;
 use smol_str::{SmolStr, SmolStrBuilder};
+use squalid::BoolExt;
 
 use crate::ast;
 
@@ -13,7 +14,7 @@ pub struct AstPanel {
 impl<'a> ComponentInterface for &'a AstPanel {
     fn render(&self, _grid: Grid) -> Result<Component<'_>, anyhow::Error> {
         Ok(soft! {
-            %Node::new(&self.tree, 0)
+            %Node::new(&self.tree, 0, true)
         })
     }
 }
@@ -21,13 +22,19 @@ impl<'a> ComponentInterface for &'a AstPanel {
 pub struct Node<'a> {
     pub node: &'a ast::Node,
     pub nesting_level: usize,
+    pub should_print_top_and_bottom_lines: bool,
 }
 
 impl<'a> Node<'a> {
-    pub fn new(node: &'a ast::Node, nesting_level: usize) -> Self {
+    pub fn new(
+        node: &'a ast::Node,
+        nesting_level: usize,
+        should_print_top_and_bottom_lines: bool,
+    ) -> Self {
         Self {
             node,
             nesting_level,
+            should_print_top_and_bottom_lines,
         }
     }
 }
@@ -37,15 +44,16 @@ impl<'a> ComponentInterface for Node<'a> {
         Ok(soft! {
             %FlexColumn
                 children => {
-                    [
-                        soft! {
+                    self.should_print_top_and_bottom_lines.try_then(|| -> Result<_, anyhow::Error> {
+                        Ok(soft! {
                             %Text
                               children => [
+                                %InitialSpaces::new(self.nesting_level)
                                 %Text &self.node.type_
                                 %Text " {"
                               ]
-                        },
-                    ].into_iter()
+                        })
+                    })?.into_iter()
                         .chain(
                             self.node.children.iter().map(|child| -> Result<_, anyhow::Error> {
                                 Ok(soft! {
@@ -54,12 +62,15 @@ impl<'a> ComponentInterface for Node<'a> {
                             }).collect::<Result<SmallVec<_, 10>, _>>()?
                         )
                         .chain(
-                            [soft! {
-                                %Text children => [
-                                  %InitialSpaces::new(self.nesting_level)
-                                  %Text "}"
-                                ]
-                            }]
+                            self.should_print_top_and_bottom_lines.try_then(|| -> Result<_, anyhow::Error> {
+                                Ok(soft! {
+                                    %Text
+                                      children => [
+                                        %InitialSpaces::new(self.nesting_level)
+                                        %Text "}"
+                                      ]
+                                })
+                            })?.into_iter()
                         )
                         .collect()
                 }
@@ -171,15 +182,15 @@ impl<'a> ComponentInterface for NodeChildName<'a> {
 }
 
 pub struct Array<'a> {
-    pub values: &'a [ast::Value],
+    pub nodes: &'a [ast::Node],
     pub nesting_level: usize,
 }
 
 impl<'a> Array<'a> {
-    pub fn new(values: &'a [ast::Value], nesting_level: usize) -> Self {
-        assert!(!values.is_empty());
+    pub fn new(nodes: &'a [ast::Node], nesting_level: usize) -> Self {
+        assert!(!nodes.is_empty());
         Self {
-            values,
+            nodes,
             nesting_level,
         }
     }
@@ -189,9 +200,9 @@ impl<'a> ComponentInterface for Array<'a> {
     fn render(&self, _grid: Grid) -> Result<Component<'_>, anyhow::Error> {
         Ok(soft! {
             %FlexColumn
-              children => self.values.into_iter().map(|value| -> Result<_, anyhow::Error> {
+              children => self.nodes.into_iter().map(|node| -> Result<_, anyhow::Error> {
                   Ok(soft! {
-                      %Value::new(value, self.nesting_level + 2)
+                      %Node::new(node, self.nesting_level + 2, true)
                   })
               }).collect::<Result<Vec<_>, _>>()?
         })
