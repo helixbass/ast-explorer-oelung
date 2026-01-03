@@ -1,6 +1,6 @@
 use proc_macro2::{LineColumn, Span};
 use smol_str::ToSmolStr;
-use syn::{spanned::Spanned, Attribute, File, Item};
+use syn::{spanned::Spanned, token, Attribute, File, Item, ItemConst, Visibility};
 
 use crate::{Location, Node, NodeChild, Position, Range, Value};
 
@@ -33,12 +33,60 @@ impl<'a> From<&'a Attribute> for Value {
 
 impl<'a> From<&'a Item> for Node {
     fn from(value: &'a Item) -> Self {
-        unimplemented!()
+        match value {
+            Item::Const(item) => item.into(),
+            _ => unimplemented!(),
+        }
     }
 }
 
 impl<'a> From<&'a Item> for Value {
     fn from(value: &'a Item) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a ItemConst> for Node {
+    fn from(value: &'a ItemConst) -> Self {
+        Self::new(
+            "ItemConst".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("attrs".to_smolstr(), from_slice(&value.attrs)),
+                NodeChild::new("vis".to_smolstr(), (&value.vis).into()),
+                NodeChild::new("const_token".to_smolstr(), (&value.const_token).into()),
+                span_child(value),
+            ],
+        )
+    }
+}
+
+impl<'a> From<&'a ItemConst> for Value {
+    fn from(value: &'a ItemConst) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a Visibility> for Node {
+    fn from(value: &'a Visibility) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<'a> From<&'a Visibility> for Value {
+    fn from(value: &'a Visibility) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a token::Const> for Node {
+    fn from(value: &'a token::Const) -> Self {
+        span_only(value, "Const")
+    }
+}
+
+impl<'a> From<&'a token::Const> for Value {
+    fn from(value: &'a token::Const) -> Self {
         Node::from(value).into()
     }
 }
@@ -80,6 +128,10 @@ where
 
 fn span_child<TSpanned: Spanned>(value: &TSpanned) -> NodeChild {
     NodeChild::new("span".to_smolstr(), from_span(&value.span()))
+}
+
+fn span_only<TSpanned: Spanned>(value: &TSpanned, name: &str) -> Node {
+    Node::new(name.to_smolstr(), None, vec![span_child(value)])
 }
 
 fn from_span(value: &Span) -> Value {
