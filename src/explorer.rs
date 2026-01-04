@@ -3,7 +3,7 @@ use std::pin::Pin;
 
 use oelung::{anyhow, soft, Component, ComponentInterface, Grid};
 use oelung_lantern::ReceiveEvent;
-use ropey::Rope;
+use ropey::{Rope, RopeSlice};
 
 use crate::{syn::Parser, AstPanel, EditorPanel, Error, Node, Parse};
 
@@ -67,11 +67,7 @@ impl ReceiveEvent<CursorMovement> for AstExplorer {
             }
             CursorMovement::Right => {
                 if usize::from(self.cursor_position.column)
-                    < self
-                        .source_text
-                        .line(usize::from(self.cursor_position.row))
-                        .len_bytes()
-                        - 1
+                    < line_len(&self.source_text.line(usize::from(self.cursor_position.row))) - 1
                 {
                     self.cursor_position.column += 1;
                 }
@@ -92,4 +88,13 @@ pub enum CursorMovement {
     Down,
     Left,
     Right,
+}
+
+fn line_len(line: &RopeSlice<'_>) -> usize {
+    let line_len = line.len_bytes();
+    match line.byte(line_len - 1) {
+        // \n
+        0x0A => line_len - 1,
+        _ => line_len,
+    }
 }

@@ -18,7 +18,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
     listen_to_crossterm_events(CrosstermSender::from(sender.clone()));
 
-    let text = indoc!(
+    let text = strip_trailing_newline(indoc!(
         r#"
             const TIPS: &[&str] = &[
                 "Click on any AST node with a '+' to expand it",
@@ -35,7 +35,7 @@ async fn main() -> Result<(), anyhow::Error> {
                 }
             }
         "#
-    );
+    ));
     let mut explorer = AstExplorer::try_new(Rope::from_str(text))?;
 
     render_screen(&mut renderer, &explorer)?;
@@ -96,4 +96,12 @@ fn listen_to_crossterm_events(sender: CrosstermSender) {
 
         panic!("kill everything")
     });
+}
+
+fn strip_trailing_newline(file_contents: &str) -> &str {
+    if file_contents.ends_with("\n") {
+        &file_contents[..file_contents.len() - 1]
+    } else {
+        file_contents
+    }
 }
