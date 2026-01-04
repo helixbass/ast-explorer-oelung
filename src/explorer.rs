@@ -6,7 +6,7 @@ use oelung_lantern::ReceiveEvent;
 use ropey::{Rope, RopeSlice};
 use squalid::_d;
 
-use crate::{syn::Parser, AstPanel, EditorPanel, Error, Node, NodePath, Parse};
+use crate::{ast, syn::Parser, AstPanel, EditorPanel, Error, Node, NodePath, Parse};
 
 #[derive(Debug)]
 pub struct AstExplorer {
@@ -103,7 +103,13 @@ impl ReceiveEvent<Event> for AstExplorer {
                 }
             }
             Event::ZoomAst => {
-                unimplemented!()
+                self.current_zoomed_node = self.tree.get_path_of_smallest_containing_node(
+                    ast::Position {
+                        line: usize::from(self.cursor_position.row),
+                        column: usize::from(self.cursor_position.column),
+                    },
+                    _d(),
+                );
             }
         }
     }
