@@ -5,7 +5,7 @@ use oelung_lantern::{generate_sender, mpsc::Sender};
 use tokio::sync::mpsc::channel;
 use tokio_stream::StreamExt;
 
-use ast_explorer_oelung::{syn::Parser, AstExplorer, Parse};
+use ast_explorer_oelung::AstExplorer;
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
@@ -33,8 +33,7 @@ async fn main() -> Result<(), anyhow::Error> {
             }
         "#
     );
-    let parser = Parser::new();
-    let explorer = AstExplorer::new(parser.parse(text)?);
+    let explorer = AstExplorer::try_new(text.to_owned())?;
 
     render_screen(&mut renderer, &explorer)?;
 
@@ -52,11 +51,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
 fn render_screen(renderer: &mut Renderer, explorer: &AstExplorer) -> Result<(), anyhow::Error> {
     renderer.render(soft! {
-      %FlexColumn
-        children => [
-          %explorer
-          %Text " (hit q to quit)"
-        ]
+      %explorer
     })?;
 
     Ok(())
