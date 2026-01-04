@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use smallvec::SmallVec;
 use smol_str::{SmolStr, ToSmolStr};
 
@@ -116,6 +118,24 @@ pub struct Range {
     pub end: Location,
 }
 
+impl Range {
+    pub fn contains(&self, position: Position) -> bool {
+        match self.start {
+            Location::OffsetAndPosition {
+                position: start_position,
+                ..
+            } if start_position <= position => match self.end {
+                Location::OffsetAndPosition {
+                    position: end_position,
+                    ..
+                } if position < end_position => true,
+                _ => false,
+            },
+            _ => false,
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug)]
 pub enum Location {
     // JustOffset(Offset),
@@ -123,12 +143,28 @@ pub enum Location {
     // JustPosition(Position),
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct Position {
     /// 0-based
     pub line: usize,
     /// 0-based
     pub column: usize,
+}
+
+impl PartialOrd for Position {
+    fn partial_cmp(&self, other: &Position) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Position {
+    fn cmp(&self, other: &Position) -> Ordering {
+        match self.line.cmp(&other.line) {
+            Ordering::Less => Ordering::Less,
+            Ordering::Greater => Ordering::Greater,
+            Ordering::Equal => self.column.cmp(&other.column),
+        }
+    }
 }
 
 pub trait Parse {
