@@ -33,6 +33,27 @@ impl Value {
             }
         }
     }
+    pub fn get_path_of_smallest_containing_node(
+        &self,
+        position: Position,
+        path: NodePath,
+    ) -> Option<NodePath> {
+        match self {
+            Self::Node(node) => node.get_path_of_smallest_containing_node(position, path),
+            Self::Array(nodes) => {
+                nodes
+                    .into_iter()
+                    .enumerate()
+                    .find_map(|(array_index, array_child)| {
+                        array_child.get_path_of_smallest_containing_node(
+                            position,
+                            node_path_appended(&path, NodePathStep::ArrayChild(array_index)),
+                        )
+                    })
+            }
+            _ => None,
+        }
+    }
 }
 
 impl From<Node> for Value {
@@ -94,6 +115,28 @@ impl Node {
                 child.value.get_path(&path[1..])
             }
             _ => panic!("node path didn't match up"),
+        }
+    }
+
+    pub fn get_path_of_smallest_containing_node(
+        &self,
+        position: Position,
+        path: NodePath,
+    ) -> Option<NodePath> {
+        match self.range?.contains(position) {
+            false => None,
+            true => Some(
+                self.children
+                    .iter()
+                    .enumerate()
+                    .find_map(|(child_index, child)| {
+                        child.value.get_path_of_smallest_containing_node(
+                            position,
+                            node_path_appended(&path, NodePathStep::NodeChild(child_index)),
+                        )
+                    })
+                    .unwrap_or(path),
+            ),
         }
     }
 }
@@ -172,6 +215,12 @@ pub trait Parse {
 }
 
 pub type NodePath = SmallVec<NodePathStep, 10>;
+
+pub fn node_path_appended(path: &NodePath, step: NodePathStep) -> NodePath {
+    let mut path = path.clone();
+    path.push(step);
+    path
+}
 
 #[derive(Copy, Clone, Debug)]
 pub enum NodePathStep {
