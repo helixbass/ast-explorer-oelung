@@ -2,6 +2,7 @@ use crossterm::event::{Event, EventStream, KeyCode};
 use indoc::indoc;
 use oelung::{soft, Renderer};
 use oelung_lantern::{generate_sender, mpsc::Sender};
+use ropey::Rope;
 use tokio::sync::mpsc::channel;
 use tokio_stream::StreamExt;
 
@@ -33,7 +34,7 @@ async fn main() -> Result<(), anyhow::Error> {
             }
         "#
     );
-    let explorer = AstExplorer::try_new(text.to_owned())?;
+    let explorer = AstExplorer::try_new(Rope::from_str(text))?;
 
     render_screen(&mut renderer, &explorer)?;
 

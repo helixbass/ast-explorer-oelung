@@ -11,6 +11,7 @@ indoc = "2.0.7"
 oelung = { path = "../oelung" }
 oelung-lantern = { path = "../oelung-lantern" }
 proc-macro2 = { version = "1.0.104", features = ["span-locations"] }
+ropey = "1.6.1"
 smallvec = { version = "2.0.0-alpha.12" }
 smol_str = "0.3.4"
 squalid = { git = "https://github.com/helixbass/squalid", rev = "97ad97e8" }

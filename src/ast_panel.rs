@@ -27,6 +27,10 @@ impl<'a> ComponentInterface for AstPanel<'a> {
               overflow_y => hidden
         })
     }
+
+    fn flex_grow(&self) -> Option<f64> {
+        Some(1.0)
+    }
 }
 
 pub struct Node<'a> {

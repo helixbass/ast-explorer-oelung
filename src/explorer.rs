@@ -1,17 +1,20 @@
+use std::borrow::Cow;
+
 use oelung::{anyhow, soft, Component, ComponentInterface, Grid};
+use ropey::Rope;
 
 use crate::{syn::Parser, AstPanel, EditorPanel, Error, Node, Parse};
 
 #[derive(Debug)]
 pub struct AstExplorer {
     pub tree: Node,
-    pub source_text: String,
+    pub source_text: Rope,
 }
 
 impl AstExplorer {
-    pub fn try_new(text: String) -> Result<Self, Error> {
+    pub fn try_new(text: Rope) -> Result<Self, Error> {
         let parser = Parser::new();
-        let tree = parser.parse(&text)?;
+        let tree = parser.parse(&Cow::<'_, str>::from(&text))?;
         Ok(Self {
             tree,
             source_text: text,
