@@ -4,6 +4,7 @@ use std::pin::Pin;
 use oelung::{anyhow, soft, Component, ComponentInterface, Grid};
 use oelung_lantern::ReceiveEvent;
 use ropey::{Rope, RopeSlice};
+use squalid::_d;
 
 use crate::{syn::Parser, AstPanel, EditorPanel, Error, Node, Parse};
 
@@ -12,6 +13,7 @@ pub struct AstExplorer {
     pub tree: Node,
     pub source_text: Rope,
     pub cursor_position: Position,
+    pub sticky_cursor_position_column: Option<u16>,
 }
 
 impl AstExplorer {
@@ -22,6 +24,7 @@ impl AstExplorer {
             tree,
             source_text: text,
             cursor_position: Position { row: 0, column: 0 },
+            sticky_cursor_position_column: _d(),
         })
     }
 
@@ -30,6 +33,10 @@ impl AstExplorer {
             0 => 0,
             line_len => u16::try_from(line_len).unwrap() - 1,
         }
+    }
+
+    fn remember_sticky_cursor_position_column(&mut self) {
+        self.sticky_cursor_position_column = Some(self.cursor_position.column);
     }
 }
 
@@ -60,6 +67,10 @@ impl ReceiveEvent<CursorMovement> for AstExplorer {
             CursorMovement::Up => {
                 if self.cursor_position.row > 0 {
                     self.cursor_position.row -= 1;
+                    if let Some(sticky_cursor_position_column) = self.sticky_cursor_position_column
+                    {
+                        self.cursor_position.column = sticky_cursor_position_column;
+                    }
                     if self.cursor_position.column > self.max_allowed_column() {
                         self.cursor_position.column = self.max_allowed_column();
                     }
@@ -68,6 +79,10 @@ impl ReceiveEvent<CursorMovement> for AstExplorer {
             CursorMovement::Down => {
                 if usize::from(self.cursor_position.row) < self.source_text.len_lines() - 1 {
                     self.cursor_position.row += 1;
+                    if let Some(sticky_cursor_position_column) = self.sticky_cursor_position_column
+                    {
+                        self.cursor_position.column = sticky_cursor_position_column;
+                    }
                     if self.cursor_position.column > self.max_allowed_column() {
                         self.cursor_position.column = self.max_allowed_column();
                     }
@@ -76,11 +91,13 @@ impl ReceiveEvent<CursorMovement> for AstExplorer {
             CursorMovement::Left => {
                 if self.cursor_position.column > 0 {
                     self.cursor_position.column -= 1;
+                    self.remember_sticky_cursor_position_column();
                 }
             }
             CursorMovement::Right => {
                 if self.cursor_position.column < self.max_allowed_column() {
                     self.cursor_position.column += 1;
+                    self.remember_sticky_cursor_position_column();
                 }
             }
         }
