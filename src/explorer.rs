@@ -1,6 +1,8 @@
 use std::borrow::Cow;
+use std::pin::Pin;
 
 use oelung::{anyhow, soft, Component, ComponentInterface, Grid};
+use oelung_lantern::ReceiveEvent;
 use ropey::Rope;
 
 use crate::{syn::Parser, AstPanel, EditorPanel, Error, Node, Parse};
@@ -41,8 +43,43 @@ impl<'a> ComponentInterface for &'a AstExplorer {
     }
 }
 
+impl ReceiveEvent<CursorMovement> for AstExplorer {
+    fn receive<TQueueEffect: FnMut(Pin<Box<dyn Future<Output = ()> + Send + 'static>>)>(
+        &mut self,
+        event: &CursorMovement,
+        _queue_effect: TQueueEffect,
+    ) {
+        match event {
+            CursorMovement::Up => {
+                if self.cursor_position.row > 0 {
+                    self.cursor_position.row -= 1;
+                }
+            }
+            CursorMovement::Down => {
+                self.cursor_position.row += 1;
+            }
+            CursorMovement::Left => {
+                if self.cursor_position.column > 0 {
+                    self.cursor_position.column -= 1;
+                }
+            }
+            CursorMovement::Right => {
+                self.cursor_position.column += 1;
+            }
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug)]
 pub struct Position {
     pub row: u16,
     pub column: u16,
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum CursorMovement {
+    Up,
+    Down,
+    Left,
+    Right,
 }

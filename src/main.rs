@@ -1,12 +1,14 @@
+use std::pin::Pin;
+
 use crossterm::event::{Event, EventStream, KeyCode};
 use indoc::indoc;
 use oelung::{soft, Renderer};
-use oelung_lantern::{generate_sender, mpsc::Sender};
+use oelung_lantern::{generate_sender, mpsc::Sender, ReceiveEvent};
 use ropey::Rope;
 use tokio::sync::mpsc::channel;
 use tokio_stream::StreamExt;
 
-use ast_explorer_oelung::AstExplorer;
+use ast_explorer_oelung::{explorer::CursorMovement, AstExplorer};
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
@@ -34,16 +36,32 @@ async fn main() -> Result<(), anyhow::Error> {
             }
         "#
     );
-    let explorer = AstExplorer::try_new(Rope::from_str(text))?;
+    let mut explorer = AstExplorer::try_new(Rope::from_str(text))?;
 
     render_screen(&mut renderer, &explorer)?;
 
     while let Some(world) = receiver.recv().await {
+        let mut queued_effects: Vec<Pin<Box<dyn Future<Output = ()> + Send + 'static>>> = vec![];
         match world {
             World::Crossterm(Event::Key(key)) if key.code == KeyCode::Char('q') => {
                 break;
             }
+            World::Crossterm(Event::Key(key)) if key.code == KeyCode::Char('j') => {
+                explorer.receive(&CursorMovement::Down, |future| queued_effects.push(future));
+            }
+            World::Crossterm(Event::Key(key)) if key.code == KeyCode::Char('k') => {
+                explorer.receive(&CursorMovement::Up, |future| queued_effects.push(future));
+            }
+            World::Crossterm(Event::Key(key)) if key.code == KeyCode::Char('l') => {
+                explorer.receive(&CursorMovement::Right, |future| queued_effects.push(future));
+            }
+            World::Crossterm(Event::Key(key)) if key.code == KeyCode::Char('h') => {
+                explorer.receive(&CursorMovement::Left, |future| queued_effects.push(future));
+            }
             _ => {}
+        }
+        for effect in queued_effects {
+            tokio::spawn(effect);
         }
     }
 
