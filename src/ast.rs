@@ -10,6 +10,22 @@ pub enum Value {
     Scalar(SmolStr),
 }
 
+impl Value {
+    pub fn get_path(&self, path: &[NodePathStep]) -> &Value {
+        if path.is_empty() {
+            self
+        } else {
+            match (self, path[0]) {
+                (Self::Node(node), NodePathStep::NodeChild(_)) => node.get_path(path),
+                (Self::Array(nodes), NodePathStep::ArrayChild(index)) => {
+                    nodes[index].get_path(&path[1..])
+                }
+                _ => panic!("node path didn't match up"),
+            }
+        }
+    }
+}
+
 impl From<Node> for Value {
     fn from(value: Node) -> Self {
         Self::Node(value)
@@ -55,6 +71,20 @@ impl Node {
             type_,
             range,
             children,
+        }
+    }
+
+    pub fn get_path(&self, path: &[NodePathStep]) -> &Value {
+        assert!(!path.is_empty());
+        match path[0] {
+            NodePathStep::NodeChild(index) => {
+                let child = &self.children[index];
+                if path.len() == 1 {
+                    return &child.value;
+                }
+                child.value.get_path(&path[1..])
+            }
+            _ => panic!("node path didn't match up"),
         }
     }
 }
