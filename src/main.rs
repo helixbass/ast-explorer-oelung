@@ -48,15 +48,19 @@ async fn main() -> Result<(), anyhow::Error> {
             }
             World::Crossterm(Event::Key(key)) if key.code == KeyCode::Char('j') => {
                 explorer.receive(&CursorMovement::Down, |future| queued_effects.push(future));
+                render_screen(&mut renderer, &explorer)?;
             }
             World::Crossterm(Event::Key(key)) if key.code == KeyCode::Char('k') => {
                 explorer.receive(&CursorMovement::Up, |future| queued_effects.push(future));
+                render_screen(&mut renderer, &explorer)?;
             }
             World::Crossterm(Event::Key(key)) if key.code == KeyCode::Char('l') => {
                 explorer.receive(&CursorMovement::Right, |future| queued_effects.push(future));
+                render_screen(&mut renderer, &explorer)?;
             }
             World::Crossterm(Event::Key(key)) if key.code == KeyCode::Char('h') => {
                 explorer.receive(&CursorMovement::Left, |future| queued_effects.push(future));
+                render_screen(&mut renderer, &explorer)?;
             }
             _ => {}
         }
