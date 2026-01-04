@@ -24,6 +24,13 @@ impl AstExplorer {
             cursor_position: Position { row: 0, column: 0 },
         })
     }
+
+    fn max_allowed_column(&self) -> u16 {
+        match line_len(&self.source_text.line(usize::from(self.cursor_position.row))) {
+            0 => 0,
+            line_len => u16::try_from(line_len).unwrap() - 1,
+        }
+    }
 }
 
 impl<'a> ComponentInterface for &'a AstExplorer {
@@ -53,11 +60,17 @@ impl ReceiveEvent<CursorMovement> for AstExplorer {
             CursorMovement::Up => {
                 if self.cursor_position.row > 0 {
                     self.cursor_position.row -= 1;
+                    if self.cursor_position.column > self.max_allowed_column() {
+                        self.cursor_position.column = self.max_allowed_column();
+                    }
                 }
             }
             CursorMovement::Down => {
                 if usize::from(self.cursor_position.row) < self.source_text.len_lines() - 1 {
                     self.cursor_position.row += 1;
+                    if self.cursor_position.column > self.max_allowed_column() {
+                        self.cursor_position.column = self.max_allowed_column();
+                    }
                 }
             }
             CursorMovement::Left => {
@@ -66,9 +79,7 @@ impl ReceiveEvent<CursorMovement> for AstExplorer {
                 }
             }
             CursorMovement::Right => {
-                if usize::from(self.cursor_position.column)
-                    < line_len(&self.source_text.line(usize::from(self.cursor_position.row))) - 1
-                {
+                if self.cursor_position.column < self.max_allowed_column() {
                     self.cursor_position.column += 1;
                 }
             }
