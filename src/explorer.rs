@@ -57,14 +57,14 @@ impl<'a> ComponentInterface for &'a AstExplorer {
     }
 }
 
-impl ReceiveEvent<CursorMovement> for AstExplorer {
+impl ReceiveEvent<Event> for AstExplorer {
     fn receive<TQueueEffect: FnMut(Pin<Box<dyn Future<Output = ()> + Send + 'static>>)>(
         &mut self,
-        event: &CursorMovement,
+        event: &Event,
         _queue_effect: TQueueEffect,
     ) {
         match event {
-            CursorMovement::Up => {
+            Event::CursorMovement(CursorMovement::Up) => {
                 if self.cursor_position.row > 0 {
                     self.cursor_position.row -= 1;
                     if let Some(sticky_cursor_position_column) = self.sticky_cursor_position_column
@@ -76,7 +76,7 @@ impl ReceiveEvent<CursorMovement> for AstExplorer {
                     }
                 }
             }
-            CursorMovement::Down => {
+            Event::CursorMovement(CursorMovement::Down) => {
                 if usize::from(self.cursor_position.row) < self.source_text.len_lines() - 1 {
                     self.cursor_position.row += 1;
                     if let Some(sticky_cursor_position_column) = self.sticky_cursor_position_column
@@ -88,17 +88,20 @@ impl ReceiveEvent<CursorMovement> for AstExplorer {
                     }
                 }
             }
-            CursorMovement::Left => {
+            Event::CursorMovement(CursorMovement::Left) => {
                 if self.cursor_position.column > 0 {
                     self.cursor_position.column -= 1;
                     self.remember_sticky_cursor_position_column();
                 }
             }
-            CursorMovement::Right => {
+            Event::CursorMovement(CursorMovement::Right) => {
                 if self.cursor_position.column < self.max_allowed_column() {
                     self.cursor_position.column += 1;
                     self.remember_sticky_cursor_position_column();
                 }
+            }
+            Event::ZoomAst => {
+                unimplemented!()
             }
         }
     }
@@ -116,6 +119,11 @@ pub enum CursorMovement {
     Down,
     Left,
     Right,
+}
+
+pub enum Event {
+    CursorMovement(CursorMovement),
+    ZoomAst,
 }
 
 fn line_len(line: &RopeSlice<'_>) -> usize {

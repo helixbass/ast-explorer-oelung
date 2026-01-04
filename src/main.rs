@@ -8,7 +8,10 @@ use ropey::Rope;
 use tokio::sync::mpsc::channel;
 use tokio_stream::StreamExt;
 
-use ast_explorer_oelung::{explorer::CursorMovement, AstExplorer};
+use ast_explorer_oelung::{
+    explorer::{self, CursorMovement},
+    AstExplorer,
+};
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
@@ -47,19 +50,37 @@ async fn main() -> Result<(), anyhow::Error> {
                 break;
             }
             World::Crossterm(Event::Key(key)) if key.code == KeyCode::Char('j') => {
-                explorer.receive(&CursorMovement::Down, |future| queued_effects.push(future));
+                explorer.receive(
+                    &explorer::Event::CursorMovement(CursorMovement::Down),
+                    |future| queued_effects.push(future),
+                );
                 render_screen(&mut renderer, &explorer)?;
             }
             World::Crossterm(Event::Key(key)) if key.code == KeyCode::Char('k') => {
-                explorer.receive(&CursorMovement::Up, |future| queued_effects.push(future));
+                explorer.receive(
+                    &explorer::Event::CursorMovement(CursorMovement::Up),
+                    |future| queued_effects.push(future),
+                );
                 render_screen(&mut renderer, &explorer)?;
             }
             World::Crossterm(Event::Key(key)) if key.code == KeyCode::Char('l') => {
-                explorer.receive(&CursorMovement::Right, |future| queued_effects.push(future));
+                explorer.receive(
+                    &explorer::Event::CursorMovement(CursorMovement::Right),
+                    |future| queued_effects.push(future),
+                );
                 render_screen(&mut renderer, &explorer)?;
             }
             World::Crossterm(Event::Key(key)) if key.code == KeyCode::Char('h') => {
-                explorer.receive(&CursorMovement::Left, |future| queued_effects.push(future));
+                explorer.receive(
+                    &explorer::Event::CursorMovement(CursorMovement::Left),
+                    |future| queued_effects.push(future),
+                );
+                render_screen(&mut renderer, &explorer)?;
+            }
+            World::Crossterm(Event::Key(key)) if key.code == KeyCode::Enter => {
+                explorer.receive(&explorer::Event::ZoomAst, |future| {
+                    queued_effects.push(future)
+                });
                 render_screen(&mut renderer, &explorer)?;
             }
             _ => {}
