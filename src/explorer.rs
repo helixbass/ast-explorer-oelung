@@ -9,6 +9,7 @@ use crate::{syn::Parser, AstPanel, EditorPanel, Error, Node, Parse};
 pub struct AstExplorer {
     pub tree: Node,
     pub source_text: Rope,
+    pub cursor_position: Position,
 }
 
 impl AstExplorer {
@@ -18,6 +19,7 @@ impl AstExplorer {
         Ok(Self {
             tree,
             source_text: text,
+            cursor_position: Position { row: 0, column: 0 },
         })
     }
 }
@@ -27,7 +29,7 @@ impl<'a> ComponentInterface for &'a AstExplorer {
         Ok(soft! {
             %FlexRow
               children => [
-                %EditorPanel::new(&self.source_text)
+                %EditorPanel::new(&self.source_text, self.cursor_position)
                 %AstPanel::new(&self.tree)
               ]
               flex_grow => 1
@@ -37,4 +39,10 @@ impl<'a> ComponentInterface for &'a AstExplorer {
     fn flex_grow(&self) -> Option<f64> {
         Some(1.0)
     }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct Position {
+    pub row: u16,
+    pub column: u16,
 }

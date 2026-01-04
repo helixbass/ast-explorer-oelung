@@ -2,7 +2,7 @@ pub mod ast;
 mod ast_panel;
 mod editor_panel;
 pub mod error;
-mod explorer;
+pub mod explorer;
 pub mod syn;
 
 pub use ast::{Location, Node, NodeChild, Nodes, Offset, Parse, Position, Range, Value};

@@ -3,13 +3,19 @@ use std::borrow::Cow;
 use oelung::{anyhow, soft, Component, ComponentInterface, Grid};
 use ropey::Rope;
 
+use crate::explorer;
+
 pub struct EditorPanel<'a> {
     pub source_text: &'a Rope,
+    pub cursor_position: explorer::Position,
 }
 
 impl<'a> EditorPanel<'a> {
-    pub fn new(source_text: &'a Rope) -> Self {
-        Self { source_text }
+    pub fn new(source_text: &'a Rope, cursor_position: explorer::Position) -> Self {
+        Self {
+            source_text,
+            cursor_position,
+        }
     }
 }
 
@@ -22,6 +28,9 @@ impl<'a> ComponentInterface for EditorPanel<'a> {
                     %Text &Cow::<'_, str>::from(line)
                 })
               }).collect::<Result<_, _>>()?
+              cursor => %Cursor.Relative
+                x => self.cursor_position.column
+                y => self.cursor_position.row
         })
     }
 
