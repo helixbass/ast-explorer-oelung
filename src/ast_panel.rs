@@ -3,17 +3,21 @@ use smallvec::SmallVec;
 use smol_str::{SmolStr, SmolStrBuilder};
 use squalid::BoolExt;
 
-use crate::ast;
+use crate::{ast, NodePath};
 
 const SPACES_PER_NESTING_LEVEL: usize = 4;
 
 pub struct AstPanel<'a> {
     pub tree: &'a ast::Node,
+    pub current_zoomed_node: Option<&'a NodePath>,
 }
 
 impl<'a> AstPanel<'a> {
-    pub fn new(tree: &'a ast::Node) -> Self {
-        Self { tree }
+    pub fn new(tree: &'a ast::Node, current_zoomed_node: Option<&'a NodePath>) -> Self {
+        Self {
+            tree,
+            current_zoomed_node,
+        }
     }
 }
 

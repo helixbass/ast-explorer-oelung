@@ -6,7 +6,7 @@ use oelung_lantern::ReceiveEvent;
 use ropey::{Rope, RopeSlice};
 use squalid::_d;
 
-use crate::{syn::Parser, AstPanel, EditorPanel, Error, Node, Parse};
+use crate::{syn::Parser, AstPanel, EditorPanel, Error, Node, NodePath, Parse};
 
 #[derive(Debug)]
 pub struct AstExplorer {
@@ -14,6 +14,7 @@ pub struct AstExplorer {
     pub source_text: Rope,
     pub cursor_position: Position,
     pub sticky_cursor_position_column: Option<u16>,
+    pub current_zoomed_node: Option<NodePath>,
 }
 
 impl AstExplorer {
@@ -25,6 +26,7 @@ impl AstExplorer {
             source_text: text,
             cursor_position: Position { row: 0, column: 0 },
             sticky_cursor_position_column: _d(),
+            current_zoomed_node: _d(),
         })
     }
 
@@ -46,7 +48,7 @@ impl<'a> ComponentInterface for &'a AstExplorer {
             %FlexRow
               children => [
                 %EditorPanel::new(&self.source_text, self.cursor_position)
-                %AstPanel::new(&self.tree)
+                %AstPanel::new(&self.tree, self.current_zoomed_node.as_ref())
               ]
               flex_grow => 1
         })
