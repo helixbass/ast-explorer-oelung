@@ -25,10 +25,12 @@ impl AstExplorer {
 impl<'a> ComponentInterface for &'a AstExplorer {
     fn render(&self, _grid: Grid) -> Result<Component<'_>, anyhow::Error> {
         Ok(soft! {
-            %FlexRow children => [
-              %EditorPanel::new(&self.source_text)
-              %AstPanel::new(&self.tree)
-            ]
+            %FlexRow
+              children => [
+                %EditorPanel::new(&self.source_text)
+                %AstPanel::new(&self.tree)
+              ]
+              flex_grow => 1
         })
     }
 
