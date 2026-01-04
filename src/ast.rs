@@ -97,3 +97,11 @@ pub struct Position {
 pub trait Parse {
     fn parse(&self, text: &str) -> Result<Node, Error>;
 }
+
+pub type NodePath = SmallVec<NodePathStep, 10>;
+
+#[derive(Copy, Clone, Debug)]
+pub enum NodePathStep {
+    NodeChild(usize),
+    ArrayChild(usize),
+}

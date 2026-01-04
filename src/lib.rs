@@ -5,7 +5,9 @@ pub mod error;
 pub mod explorer;
 pub mod syn;
 
-pub use ast::{Location, Node, NodeChild, NodePath, Nodes, Offset, Parse, Position, Range, Value};
+pub use ast::{
+    Location, Node, NodeChild, NodePath, NodePathStep, Nodes, Offset, Parse, Position, Range, Value,
+};
 pub use ast_panel::AstPanel;
 pub use editor_panel::EditorPanel;
 pub use error::Error;
