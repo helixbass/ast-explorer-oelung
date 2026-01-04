@@ -56,7 +56,9 @@ impl ReceiveEvent<CursorMovement> for AstExplorer {
                 }
             }
             CursorMovement::Down => {
-                self.cursor_position.row += 1;
+                if usize::from(self.cursor_position.row) < self.source_text.len_lines() - 1 {
+                    self.cursor_position.row += 1;
+                }
             }
             CursorMovement::Left => {
                 if self.cursor_position.column > 0 {
@@ -64,7 +66,15 @@ impl ReceiveEvent<CursorMovement> for AstExplorer {
                 }
             }
             CursorMovement::Right => {
-                self.cursor_position.column += 1;
+                if usize::from(self.cursor_position.column)
+                    < self
+                        .source_text
+                        .line(usize::from(self.cursor_position.row))
+                        .len_bytes()
+                        - 1
+                {
+                    self.cursor_position.column += 1;
+                }
             }
         }
     }
