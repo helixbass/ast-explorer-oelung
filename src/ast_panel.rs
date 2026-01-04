@@ -23,10 +23,14 @@ impl<'a> AstPanel<'a> {
 
 impl<'a> ComponentInterface for AstPanel<'a> {
     fn render(&self, _grid: Grid) -> Result<Component<'_>, anyhow::Error> {
+        let current_zoomed_node = match self.current_zoomed_node {
+            None => self.tree,
+            Some(current_zoomed_node) => self.tree.get_path(current_zoomed_node).as_node(),
+        };
         Ok(soft! {
             %FlexColumn
               children => [
-                %Node::new(self.tree, 0, true)
+                %Node::new(current_zoomed_node, 0, true)
               ]
               overflow_y => hidden
         })

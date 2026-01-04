@@ -11,6 +11,13 @@ pub enum Value {
 }
 
 impl Value {
+    pub fn as_node(&self) -> &Node {
+        match self {
+            Self::Node(node) => node,
+            _ => panic!("expected node"),
+        }
+    }
+
     pub fn get_path(&self, path: &[NodePathStep]) -> &Value {
         if path.is_empty() {
             self
