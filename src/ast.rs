@@ -91,6 +91,12 @@ impl From<String> for Value {
     }
 }
 
+impl From<char> for Value {
+    fn from(value: char) -> Self {
+        Self::Scalar(value.to_smolstr())
+    }
+}
+
 pub type Nodes = SmallVec<Node, 10>;
 
 #[derive(Debug)]

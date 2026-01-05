@@ -1,12 +1,15 @@
-use proc_macro2::{extra::DelimSpan, LineColumn, Span};
+use proc_macro2::{
+    extra::DelimSpan, Group, LineColumn, Literal, Punct, Spacing, Span, TokenStream, TokenTree,
+};
 use smallvec::{smallvec, SmallVec};
 use smol_str::ToSmolStr;
 use syn::{
     punctuated::{self, Punctuated},
     spanned::Spanned,
-    token, Abi, Attribute, Block, Expr, ExprArray, ExprForLoop, ExprLit, ExprReference, File,
-    FnArg, GenericParam, Generics, Ident, Item, ItemConst, ItemFn, Label, Lifetime, Lit, LitStr,
-    Pat, PatIdent, PatTuple, Path, PathArguments, PathSegment, QSelf, ReturnType, Signature, Stmt,
+    token, Abi, AngleBracketedGenericArguments, Attribute, Block, Expr, ExprArray, ExprForLoop,
+    ExprLit, ExprMethodCall, ExprPath, ExprReference, File, FnArg, GenericParam, Generics, Ident,
+    Item, ItemConst, ItemFn, Label, Lifetime, Lit, LitStr, Macro, MacroDelimiter, Pat, PatIdent,
+    PatTuple, Path, PathArguments, PathSegment, QSelf, ReturnType, Signature, Stmt, StmtMacro,
     Type, TypePath, TypeReference, TypeSlice, Variadic, Visibility, WhereClause,
 };
 
@@ -211,6 +214,18 @@ impl<'a> From<&'a token::Const> for Value {
     }
 }
 
+impl<'a> From<&'a token::Dot> for Node {
+    fn from(value: &'a token::Dot) -> Self {
+        span_only(value, "Dot")
+    }
+}
+
+impl<'a> From<&'a token::Dot> for Value {
+    fn from(value: &'a token::Dot) -> Self {
+        Node::from(value).into()
+    }
+}
+
 impl<'a> From<&'a token::Eq> for Node {
     fn from(value: &'a token::Eq) -> Self {
         span_only(value, "Eq")
@@ -259,6 +274,18 @@ impl<'a> From<&'a token::Gt> for Value {
     }
 }
 
+impl<'a> From<&'a token::In> for Node {
+    fn from(value: &'a token::In) -> Self {
+        span_only(value, "In")
+    }
+}
+
+impl<'a> From<&'a token::In> for Value {
+    fn from(value: &'a token::In) -> Self {
+        Node::from(value).into()
+    }
+}
+
 impl<'a> From<&'a token::Lt> for Node {
     fn from(value: &'a token::Lt) -> Self {
         span_only(value, "Lt")
@@ -279,6 +306,18 @@ impl<'a> From<&'a token::Mut> for Node {
 
 impl<'a> From<&'a token::Mut> for Value {
     fn from(value: &'a token::Mut) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a token::Not> for Node {
+    fn from(value: &'a token::Not) -> Self {
+        span_only(value, "Not")
+    }
+}
+
+impl<'a> From<&'a token::Not> for Value {
+    fn from(value: &'a token::Not) -> Self {
         Node::from(value).into()
     }
 }
@@ -490,6 +529,8 @@ impl<'a> From<&'a Expr> for Node {
             Expr::Array(expr) => expr.into(),
             Expr::Lit(expr) => expr.into(),
             Expr::ForLoop(expr) => expr.into(),
+            Expr::MethodCall(expr) => expr.into(),
+            Expr::Path(expr) => expr.into(),
             _ => unimplemented!(),
         }
     }
@@ -577,6 +618,9 @@ impl<'a> From<&'a ExprForLoop> for Node {
                 NodeChild::new("label".to_smolstr(), from_option(&value.label)),
                 NodeChild::new("for_token".to_smolstr(), (&value.for_token).into()),
                 NodeChild::new("pat".to_smolstr(), (&*value.pat).into()),
+                NodeChild::new("in_token".to_smolstr(), (&value.in_token).into()),
+                NodeChild::new("expr".to_smolstr(), (&*value.expr).into()),
+                NodeChild::new("body".to_smolstr(), (&value.body).into()),
                 span_child(value),
             ],
             false,
@@ -586,6 +630,54 @@ impl<'a> From<&'a ExprForLoop> for Node {
 
 impl<'a> From<&'a ExprForLoop> for Value {
     fn from(value: &'a ExprForLoop) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a ExprMethodCall> for Node {
+    fn from(value: &'a ExprMethodCall) -> Self {
+        Self::new(
+            "ExprMethodCall".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("attrs".to_smolstr(), from_slice(&value.attrs)),
+                NodeChild::new("receiver".to_smolstr(), (&*value.receiver).into()),
+                NodeChild::new("dot_token".to_smolstr(), (&value.dot_token).into()),
+                NodeChild::new("method".to_smolstr(), (&value.method).into()),
+                NodeChild::new("turbofish".to_smolstr(), from_option(&value.turbofish)),
+                NodeChild::new("paren_token".to_smolstr(), (&value.paren_token).into()),
+                NodeChild::new("args".to_smolstr(), (&value.args).into()),
+                span_child(value),
+            ],
+            false,
+        )
+    }
+}
+
+impl<'a> From<&'a ExprMethodCall> for Value {
+    fn from(value: &'a ExprMethodCall) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a ExprPath> for Node {
+    fn from(value: &'a ExprPath) -> Self {
+        Self::new(
+            "ExprPath".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("attrs".to_smolstr(), from_slice(&value.attrs)),
+                NodeChild::new("qself".to_smolstr(), from_option(&value.qself)),
+                NodeChild::new("path".to_smolstr(), (&value.path).into()),
+                span_child(value),
+            ],
+            false,
+        )
+    }
+}
+
+impl<'a> From<&'a ExprPath> for Value {
+    fn from(value: &'a ExprPath) -> Self {
         Node::from(value).into()
     }
 }
@@ -840,6 +932,7 @@ impl<'a> From<&'a Stmt> for Node {
                     false,
                 ),
             },
+            Stmt::Macro(stmt) => stmt.into(),
             _ => unimplemented!(),
         }
     }
@@ -847,6 +940,28 @@ impl<'a> From<&'a Stmt> for Node {
 
 impl<'a> From<&'a Stmt> for Value {
     fn from(value: &'a Stmt) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a StmtMacro> for Node {
+    fn from(value: &'a StmtMacro) -> Self {
+        Self::new(
+            "StmtMacro".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("attrs".to_smolstr(), from_slice(&value.attrs)),
+                NodeChild::new("mac".to_smolstr(), (&value.mac).into()),
+                NodeChild::new("semi_token".to_smolstr(), from_option(&value.semi_token)),
+                span_child(value),
+            ],
+            false,
+        )
+    }
+}
+
+impl<'a> From<&'a StmtMacro> for Value {
+    fn from(value: &'a StmtMacro) -> Self {
         Node::from(value).into()
     }
 }
@@ -921,6 +1036,148 @@ impl<'a> From<&'a PatIdent> for Node {
 impl<'a> From<&'a PatIdent> for Value {
     fn from(value: &'a PatIdent) -> Self {
         Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a AngleBracketedGenericArguments> for Node {
+    fn from(value: &'a AngleBracketedGenericArguments) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<'a> From<&'a AngleBracketedGenericArguments> for Value {
+    fn from(value: &'a AngleBracketedGenericArguments) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a Macro> for Node {
+    fn from(value: &'a Macro) -> Self {
+        Self::new(
+            "Macro".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("path".to_smolstr(), (&value.path).into()),
+                NodeChild::new("bang_token".to_smolstr(), (&value.bang_token).into()),
+                NodeChild::new("delimiter".to_smolstr(), (&value.delimiter).into()),
+                NodeChild::new("tokens".to_smolstr(), (&value.tokens).into()),
+                span_child(value),
+            ],
+            false,
+        )
+    }
+}
+
+impl<'a> From<&'a Macro> for Value {
+    fn from(value: &'a Macro) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a MacroDelimiter> for Node {
+    fn from(value: &'a MacroDelimiter) -> Self {
+        match value {
+            MacroDelimiter::Paren(paren) => paren.into(),
+            MacroDelimiter::Brace(brace) => brace.into(),
+            MacroDelimiter::Bracket(bracket) => bracket.into(),
+        }
+    }
+}
+
+impl<'a> From<&'a MacroDelimiter> for Value {
+    fn from(value: &'a MacroDelimiter) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a TokenStream> for Value {
+    fn from(value: &'a TokenStream) -> Self {
+        Value::Array(
+            value
+                .clone()
+                .into_iter()
+                .map(|token_tree| (&token_tree).into())
+                .collect(),
+        )
+    }
+}
+
+impl<'a> From<&'a TokenTree> for Node {
+    fn from(value: &'a TokenTree) -> Self {
+        match value {
+            TokenTree::Group(group) => group.into(),
+            TokenTree::Ident(ident) => ident.into(),
+            TokenTree::Punct(punct) => punct.into(),
+            TokenTree::Literal(literal) => literal.into(),
+        }
+    }
+}
+
+impl<'a> From<&'a TokenTree> for Value {
+    fn from(value: &'a TokenTree) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a Group> for Node {
+    fn from(value: &'a Group) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<'a> From<&'a Group> for Value {
+    fn from(value: &'a Group) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a Punct> for Node {
+    fn from(value: &'a Punct) -> Self {
+        Self::new(
+            "Punct".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("as_char".to_smolstr(), value.as_char().into()),
+                NodeChild::new("spacing".to_smolstr(), value.spacing().into()),
+                span_child(value),
+            ],
+            false,
+        )
+    }
+}
+
+impl<'a> From<&'a Punct> for Value {
+    fn from(value: &'a Punct) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a Literal> for Node {
+    fn from(value: &'a Literal) -> Self {
+        Self::new(
+            "Literal".to_smolstr(),
+            Some(value.span().into()),
+            vec![
+                NodeChild::new("to_string".to_smolstr(), value.to_string().into()),
+                span_child(value),
+            ],
+            false,
+        )
+    }
+}
+
+impl<'a> From<&'a Literal> for Value {
+    fn from(value: &'a Literal) -> Self {
+        Node::from(value).into()
+    }
+}
+
+impl<'a> From<&'a Spacing> for Value {
+    fn from(value: &'a Spacing) -> Self {
+        Self::Scalar(match value {
+            Spacing::Alone => "Alone".to_smolstr(),
+            Spacing::Joint => "Joint".to_smolstr(),
+        })
     }
 }
 
