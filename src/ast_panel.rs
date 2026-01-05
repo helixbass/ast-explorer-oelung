@@ -72,39 +72,52 @@ impl<'a> Node<'a> {
 
 impl<'a> ComponentInterface for Node<'a> {
     fn render(&self, _grid: Grid) -> Result<Component<'_>, anyhow::Error> {
-        Ok(soft! {
-            %FlexColumn
-                children => {
-                    self.should_print_top_and_bottom_lines.try_then(|| -> Result<_, anyhow::Error> {
-                        Ok(soft! {
-                            %Text
-                              children => [
-                                %InitialSpaces::new(self.nesting_level)
-                                %Text &self.node.type_
-                                %Text " {"
-                              ]
-                        })
-                    })?.into_iter()
-                        .chain(
-                            self.node.children.iter().map(|child| -> Result<_, anyhow::Error> {
-                                Ok(soft! {
-                                    %NodeChild::new(child, self.nesting_level)
-                                })
-                            }).collect::<Result<SmallVec<_, 10>, _>>()?
-                        )
-                        .chain(
-                            self.should_print_top_and_bottom_lines.try_then(|| -> Result<_, anyhow::Error> {
-                                Ok(soft! {
-                                    %Text
-                                      children => [
-                                        %InitialSpaces::new(self.nesting_level)
-                                        %Text "}"
-                                      ]
-                                })
-                            })?.into_iter()
-                        )
-                        .collect()
-                }
+        Ok(match self.are_locations_expanded && self.node.is_location {
+            false => soft! {
+                %FlexColumn
+                    children => {
+                        self.should_print_top_and_bottom_lines.try_then(|| -> Result<_, anyhow::Error> {
+                            Ok(soft! {
+                                %Text
+                                  children => [
+                                    %InitialSpaces::new(self.nesting_level)
+                                    %Text &self.node.type_
+                                    %Text " {"
+                                  ]
+                            })
+                        })?.into_iter()
+                            .chain(
+                                self.node.children.iter().map(|child| -> Result<_, anyhow::Error> {
+                                    Ok(soft! {
+                                        %NodeChild::new(child, self.nesting_level)
+                                    })
+                                }).collect::<Result<SmallVec<_, 10>, _>>()?
+                            )
+                            .chain(
+                                self.should_print_top_and_bottom_lines.try_then(|| -> Result<_, anyhow::Error> {
+                                    Ok(soft! {
+                                        %Text
+                                          children => [
+                                            %InitialSpaces::new(self.nesting_level)
+                                            %Text "}"
+                                          ]
+                                    })
+                                })?.into_iter()
+                            )
+                            .collect()
+                    }
+            },
+            true => soft! {
+                %FlexColumn
+                    children => [
+                        %Text
+                          children => [
+                            %InitialSpaces::new(self.nesting_level)
+                            %Text &self.node.type_
+                            %Text " { ... }"
+                          ]
+                    ]
+            },
         })
     }
 }

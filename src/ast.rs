@@ -93,14 +93,21 @@ pub struct Node {
     pub type_: SmolStr,
     pub range: Option<Range>,
     pub children: Vec<NodeChild>,
+    pub is_location: bool,
 }
 
 impl Node {
-    pub fn new(type_: SmolStr, range: Option<Range>, children: Vec<NodeChild>) -> Self {
+    pub fn new(
+        type_: SmolStr,
+        range: Option<Range>,
+        children: Vec<NodeChild>,
+        is_location: bool,
+    ) -> Self {
         Self {
             type_,
             range,
             children,
+            is_location,
         }
     }
 

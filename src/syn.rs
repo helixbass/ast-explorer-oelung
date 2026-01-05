@@ -23,6 +23,7 @@ impl<'a> From<&'a File> for Node {
                 NodeChild::new("items".to_smolstr(), from_slice(&value.items)),
                 span_child(value),
             ],
+            false,
         )
     }
 }
@@ -73,6 +74,7 @@ impl<'a> From<&'a ItemConst> for Node {
                 NodeChild::new("semi_token".to_smolstr(), (&value.semi_token).into()),
                 span_child(value),
             ],
+            false,
         )
     }
 }
@@ -95,6 +97,7 @@ impl<'a> From<&'a ItemFn> for Node {
                 NodeChild::new("block".to_smolstr(), (&*value.block).into()),
                 span_child(value),
             ],
+            false,
         )
     }
 }
@@ -115,6 +118,7 @@ impl<'a> From<&'a Visibility> for Value {
                     NodeChild::new("pub_token".to_smolstr(), pub_token.into()),
                     span_child(value),
                 ],
+                false,
             )
             .into(),
             Visibility::Inherited => Self::Scalar("Inherited".to_smolstr()),
@@ -360,6 +364,7 @@ impl<'a> From<&'a Ident> for Node {
                 NodeChild::new("to_string".to_smolstr(), value.to_string().into()),
                 span_child(value),
             ],
+            false,
         )
     }
 }
@@ -385,6 +390,7 @@ impl<'a> From<&'a Generics> for Node {
                 ),
                 span_child(value),
             ],
+            false,
         )
     }
 }
@@ -424,6 +430,7 @@ impl<'a> From<&'a TypeReference> for Node {
                 NodeChild::new("elem".to_smolstr(), (&*value.elem).into()),
                 span_child(value),
             ],
+            false,
         )
     }
 }
@@ -444,6 +451,7 @@ impl<'a> From<&'a TypeSlice> for Node {
                 NodeChild::new("elem".to_smolstr(), (&*value.elem).into()),
                 span_child(value),
             ],
+            false,
         )
     }
 }
@@ -464,6 +472,7 @@ impl<'a> From<&'a TypePath> for Node {
                 NodeChild::new("path".to_smolstr(), (&value.path).into()),
                 span_child(value),
             ],
+            false,
         )
     }
 }
@@ -504,6 +513,7 @@ impl<'a> From<&'a ExprReference> for Node {
                 NodeChild::new("expr".to_smolstr(), (&*value.expr).into()),
                 span_child(value),
             ],
+            false,
         )
     }
 }
@@ -525,6 +535,7 @@ impl<'a> From<&'a ExprArray> for Node {
                 NodeChild::new("elems".to_smolstr(), (&value.elems).into()),
                 span_child(value),
             ],
+            false,
         )
     }
 }
@@ -545,6 +556,7 @@ impl<'a> From<&'a ExprLit> for Node {
                 NodeChild::new("lit".to_smolstr(), (&value.lit).into()),
                 span_child(value),
             ],
+            false,
         )
     }
 }
@@ -567,6 +579,7 @@ impl<'a> From<&'a ExprForLoop> for Node {
                 NodeChild::new("pat".to_smolstr(), (&*value.pat).into()),
                 span_child(value),
             ],
+            false,
         )
     }
 }
@@ -596,6 +609,7 @@ impl<'a> From<&'a Signature> for Node {
                 NodeChild::new("output".to_smolstr(), (&value.output).into()),
                 span_child(value),
             ],
+            false,
         )
     }
 }
@@ -616,6 +630,7 @@ impl<'a> From<&'a Block> for Node {
                 NodeChild::new("stmts".to_smolstr(), from_slice(&value.stmts)),
                 span_child(value),
             ],
+            false,
         )
     }
 }
@@ -687,6 +702,7 @@ impl<'a> From<&'a Path> for Node {
                 NodeChild::new("segments".to_smolstr(), (&value.segments).into()),
                 span_child(value),
             ],
+            false,
         )
     }
 }
@@ -707,6 +723,7 @@ impl<'a> From<&'a PathSegment> for Node {
                 NodeChild::new("arguments".to_smolstr(), (&value.arguments).into()),
                 span_child(value),
             ],
+            false,
         )
     }
 }
@@ -751,6 +768,7 @@ impl<'a> From<&'a LitStr> for Node {
                 NodeChild::new("suffix".to_smolstr(), value.suffix().into()),
                 span_child(value),
             ],
+            false,
         )
     }
 }
@@ -819,6 +837,7 @@ impl<'a> From<&'a Stmt> for Node {
                         NodeChild::new("semi".to_smolstr(), semi.into()),
                         span_child(value),
                     ],
+                    false,
                 ),
             },
             _ => unimplemented!(),
@@ -871,6 +890,7 @@ impl<'a> From<&'a PatTuple> for Node {
                 NodeChild::new("elems".to_smolstr(), (&value.elems).into()),
                 span_child(value),
             ],
+            false,
         )
     }
 }
@@ -893,6 +913,7 @@ impl<'a> From<&'a PatIdent> for Node {
                 NodeChild::new("subpat".to_smolstr(), from_option(&value.subpat)),
                 span_child(value),
             ],
+            false,
         )
     }
 }
@@ -976,7 +997,7 @@ fn span_child<TSpanned: Spanned>(value: &TSpanned) -> NodeChild {
 }
 
 fn span_only<TSpanned: Spanned>(value: &TSpanned, name: &str) -> Node {
-    Node::new(name.to_smolstr(), None, vec![span_child(value)])
+    Node::new(name.to_smolstr(), None, vec![span_child(value)], false)
 }
 
 fn delim_span_only(value: &DelimSpan, name: &str) -> Node {
@@ -987,6 +1008,7 @@ fn delim_span_only(value: &DelimSpan, name: &str) -> Node {
             NodeChild::new("open".to_smolstr(), from_span(&value.open())),
             NodeChild::new("close".to_smolstr(), from_span(&value.close())),
         ],
+        false,
     )
 }
 
@@ -998,6 +1020,7 @@ fn from_span(value: &Span) -> Value {
             NodeChild::new("start".to_smolstr(), from_line_column(&value.start())),
             NodeChild::new("end".to_smolstr(), from_line_column(&value.end())),
         ],
+        true,
     ))
 }
 
@@ -1009,6 +1032,7 @@ fn from_line_column(value: &LineColumn) -> Value {
             NodeChild::new("line".to_smolstr(), format!("{}", value.line).into()),
             NodeChild::new("column".to_smolstr(), format!("{}", value.column).into()),
         ],
+        false,
     ))
 }
 
