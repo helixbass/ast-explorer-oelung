@@ -1172,8 +1172,8 @@ impl<'a> From<&'a Literal> for Value {
     }
 }
 
-impl<'a> From<&'a Spacing> for Value {
-    fn from(value: &'a Spacing) -> Self {
+impl<'a> From<Spacing> for Value {
+    fn from(value: Spacing) -> Self {
         Self::Scalar(match value {
             Spacing::Alone => "Alone".to_smolstr(),
             Spacing::Joint => "Joint".to_smolstr(),
