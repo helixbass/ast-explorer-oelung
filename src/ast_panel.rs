@@ -89,7 +89,7 @@ impl<'a> ComponentInterface for Node<'a> {
                             .chain(
                                 self.node.children.iter().map(|child| -> Result<_, anyhow::Error> {
                                     Ok(soft! {
-                                        %NodeChild::new(child, self.nesting_level)
+                                        %NodeChild::new(child, self.nesting_level, self.are_locations_expanded)
                                     })
                                 }).collect::<Result<SmallVec<_, 10>, _>>()?
                             )
@@ -153,13 +153,19 @@ impl ComponentInterface for InitialSpaces {
 pub struct NodeChild<'a> {
     pub node_child: &'a ast::NodeChild,
     pub nesting_level: usize,
+    pub are_locations_expanded: bool,
 }
 
 impl<'a> NodeChild<'a> {
-    pub fn new(node_child: &'a ast::NodeChild, nesting_level: usize) -> Self {
+    pub fn new(
+        node_child: &'a ast::NodeChild,
+        nesting_level: usize,
+        are_locations_expanded: bool,
+    ) -> Self {
         Self {
             node_child,
             nesting_level,
+            are_locations_expanded,
         }
     }
 }
@@ -190,7 +196,7 @@ impl<'a> ComponentInterface for NodeChild<'a> {
                           %NodeChildName::new(&self.node_child.name)
                           %Text " ["
                         ]
-                        %Array::new(list, self.nesting_level)
+                        %Array::new(list, self.nesting_level, self.are_locations_expanded)
                         %Text children => [
                           %InitialSpaces::new(self.nesting_level + 1)
                           %Text "]"
@@ -199,21 +205,34 @@ impl<'a> ComponentInterface for NodeChild<'a> {
                     ]
                 },
             },
-            ast::Value::Node(node) => soft! {
-                %FlexColumn children => [
-                  %Text children => [
-                    %InitialSpaces::new(self.nesting_level + 1)
-                    %NodeChildName::new(&self.node_child.name)
-                    %Text " "
-                    %Text &node.type_
-                    %Text " {"
-                  ]
-                  %Node::new(node, self.nesting_level + 1, false)
-                  %Text children => [
-                    %InitialSpaces::new(self.nesting_level + 1)
-                    %Text "}"
-                  ]
-                ]
+            ast::Value::Node(node) => match self.are_locations_expanded && node.is_location {
+                false => soft! {
+                    %FlexColumn children => [
+                      %Text children => [
+                        %InitialSpaces::new(self.nesting_level + 1)
+                        %NodeChildName::new(&self.node_child.name)
+                        %Text " "
+                        %Text &node.type_
+                        %Text " {"
+                      ]
+                      %Node::new(node, self.nesting_level + 1, false, self.are_locations_expanded)
+                      %Text children => [
+                        %InitialSpaces::new(self.nesting_level + 1)
+                        %Text "}"
+                      ]
+                    ]
+                },
+                true => soft! {
+                    %FlexColumn children => [
+                      %Text children => [
+                        %InitialSpaces::new(self.nesting_level + 1)
+                        %NodeChildName::new(&self.node_child.name)
+                        %Text " "
+                        %Text &node.type_
+                        %Text " { ... }"
+                      ]
+                    ]
+                },
             },
         })
     }
@@ -243,14 +262,16 @@ impl<'a> ComponentInterface for NodeChildName<'a> {
 pub struct Array<'a> {
     pub nodes: &'a [ast::Node],
     pub nesting_level: usize,
+    pub are_locations_expanded: bool,
 }
 
 impl<'a> Array<'a> {
-    pub fn new(nodes: &'a [ast::Node], nesting_level: usize) -> Self {
+    pub fn new(nodes: &'a [ast::Node], nesting_level: usize, are_locations_expanded: bool) -> Self {
         assert!(!nodes.is_empty());
         Self {
             nodes,
             nesting_level,
+            are_locations_expanded,
         }
     }
 }
@@ -261,7 +282,7 @@ impl<'a> ComponentInterface for Array<'a> {
             %FlexColumn
               children => self.nodes.into_iter().map(|node| -> Result<_, anyhow::Error> {
                   Ok(soft! {
-                      %Node::new(node, self.nesting_level + 2, true)
+                      %Node::new(node, self.nesting_level + 2, true, self.are_locations_expanded)
                   })
               }).collect::<Result<Vec<_>, _>>()?
         })
