@@ -114,16 +114,13 @@ impl ReceiveEvent<Event> for AstExplorer {
                     },
                     _d(),
                 );
-                eprintln!("current_zoomed_node: {:#?}", self.current_zoomed_node);
             }
             Event::ToggleLocations => {
                 self.are_locations_expanded = !self.are_locations_expanded;
             }
             Event::PopZoomedAst => {
-                eprintln!("pop zoomed");
                 if let Some(current_zoomed_node) = self.current_zoomed_node.as_ref() {
                     self.current_zoomed_node = node_path_parent_node(current_zoomed_node);
-                    eprintln!("popped: {:#?}", self.current_zoomed_node);
                 }
             }
         }
