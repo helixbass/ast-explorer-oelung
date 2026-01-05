@@ -29,6 +29,9 @@ impl<'a> EditorPanel<'a> {
         line: RopeSlice<'_>,
         line_num: usize,
     ) -> Result<Component<'_>, anyhow::Error> {
+        let line_len = explorer::line_len(&line);
+        let line: Cow<'_, str> = line.into();
+        let line = &line[..line_len];
         let highlighted_range = self
             .current_zoomed_node
             .and_then(|current_zoomed_node| current_zoomed_node.range)
@@ -37,7 +40,7 @@ impl<'a> EditorPanel<'a> {
                 (
                     match range.start {
                         Location::OffsetAndPosition { position, .. } => {
-                            if position.line == line_num {
+                            if position.line == line_num && position.column > 0 {
                                 Some(position.column)
                             } else {
                                 None
@@ -55,7 +58,43 @@ impl<'a> EditorPanel<'a> {
                     },
                 )
             });
-        unimplemented!()
+        Ok(match highlighted_range {
+            None => soft! {
+                %Text &line
+            },
+            Some(highlighted_range) => match highlighted_range {
+                (None, None) => soft! {
+                    %Text
+                      text => &line
+                      background_color => Ansi(52)
+                },
+                (Some(start), None) => soft! {
+                    %Text children => [
+                      %Text &line[..start]
+                      %Text
+                        text => &line[start..]
+                        background_color => Ansi(52)
+                    ]
+                },
+                (None, Some(end)) => soft! {
+                    %Text children => [
+                      %Text
+                        text => &line[..end]
+                        background_color => Ansi(52)
+                      %Text &line[end..]
+                    ]
+                },
+                (Some(start), Some(end)) => soft! {
+                    %Text children => [
+                      %Text &line[..start]
+                      %Text
+                        text => &line[start..end]
+                        background_color => Ansi(52)
+                      %Text &line[end..]
+                    ]
+                },
+            },
+        })
     }
 }
 
@@ -63,12 +102,12 @@ impl<'a> ComponentInterface for EditorPanel<'a> {
     fn render(&self, _grid: Grid) -> Result<Component<'_>, anyhow::Error> {
         Ok(soft! {
             %FlexColumn
-              children => self.source_text.lines().enumerate().map(|(line_num, line)| self.render_line(line, line_num))
-              children => self.source_text.lines().map(|line| -> Result<_, anyhow::Error> {
-                Ok(soft! {
-                    %Text &Cow::<'_, str>::from(line)[..explorer::line_len(&line)]
-                })
-              }).collect::<Result<_, _>>()?
+              children => self
+                .source_text
+                .lines()
+                .enumerate()
+                .map(|(line_num, line)| self.render_line(line, line_num))
+                .collect::<Result<_, _>>()?
               cursor => %Cursor.Relative
                 x => self.cursor_position.column
                 y => self.cursor_position.row
