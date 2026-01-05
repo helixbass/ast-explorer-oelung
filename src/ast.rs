@@ -229,6 +229,17 @@ pub fn node_path_appended(path: &NodePath, step: NodePathStep) -> NodePath {
     path
 }
 
+pub fn node_path_parent_node(path: &NodePath) -> Option<NodePath> {
+    let mut path = path.clone();
+    for index in (0..path.len() - 1).rev() {
+        if matches!(path[index], NodePathStep::NodeChild(_)) {
+            path.truncate(index);
+            return Some(path);
+        }
+    }
+    None
+}
+
 #[derive(Copy, Clone, Debug)]
 pub enum NodePathStep {
     NodeChild(usize),
