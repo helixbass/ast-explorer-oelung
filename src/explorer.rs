@@ -6,7 +6,9 @@ use oelung_lantern::ReceiveEvent;
 use ropey::{Rope, RopeSlice};
 use squalid::_d;
 
-use crate::{ast, syn::Parser, AstPanel, EditorPanel, Error, Node, NodePath, Parse};
+use crate::{
+    ast, node_path_parent_node, syn::Parser, AstPanel, EditorPanel, Error, Node, NodePath, Parse,
+};
 
 #[derive(Debug)]
 pub struct AstExplorer {
@@ -116,6 +118,11 @@ impl ReceiveEvent<Event> for AstExplorer {
             Event::ToggleLocations => {
                 self.are_locations_expanded = !self.are_locations_expanded;
             }
+            Event::PopZoomedAst => {
+                if let Some(current_zoomed_node) = self.current_zoomed_node.as_ref() {
+                    self.current_zoomed_node = node_path_parent_node(current_zoomed_node);
+                }
+            }
         }
     }
 }
@@ -138,6 +145,7 @@ pub enum Event {
     CursorMovement(CursorMovement),
     ZoomAst,
     ToggleLocations,
+    PopZoomedAst,
 }
 
 pub fn line_len(line: &RopeSlice<'_>) -> usize {

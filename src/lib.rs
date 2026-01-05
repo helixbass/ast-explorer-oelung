@@ -6,7 +6,8 @@ pub mod explorer;
 pub mod syn;
 
 pub use ast::{
-    Location, Node, NodeChild, NodePath, NodePathStep, Nodes, Offset, Parse, Position, Range, Value,
+    node_path_appended, node_path_parent_node, Location, Node, NodeChild, NodePath, NodePathStep,
+    Nodes, Offset, Parse, Position, Range, Value,
 };
 pub use ast_panel::AstPanel;
 pub use editor_panel::EditorPanel;

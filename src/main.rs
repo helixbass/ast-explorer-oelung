@@ -89,6 +89,12 @@ async fn main() -> Result<(), anyhow::Error> {
                 });
                 render_screen(&mut renderer, &explorer)?;
             }
+            World::Crossterm(event) if is_ctrl_char_press(&event, 'u') => {
+                explorer.receive(&explorer::Event::PopZoomedAst, |future| {
+                    queued_effects.push(future)
+                });
+                render_screen(&mut renderer, &explorer)?;
+            }
             _ => {}
         }
         for effect in queued_effects {

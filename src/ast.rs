@@ -230,12 +230,19 @@ pub fn node_path_appended(path: &NodePath, step: NodePathStep) -> NodePath {
 }
 
 pub fn node_path_parent_node(path: &NodePath) -> Option<NodePath> {
+    if path.len() == 1 {
+        return None;
+    }
     let mut path = path.clone();
+    let mut just_saw_array_child = matches!(path[path.len() - 1], NodePathStep::ArrayChild(_));
     for index in (0..path.len() - 1).rev() {
-        if matches!(path[index], NodePathStep::NodeChild(_)) {
-            path.truncate(index);
-            return Some(path);
+        if !just_saw_array_child {
+            if matches!(path[index], NodePathStep::NodeChild(_)) {
+                path.truncate(index + 1);
+                return Some(path);
+            }
         }
+        just_saw_array_child = matches!(path[index], NodePathStep::ArrayChild(_));
     }
     None
 }
