@@ -87,6 +87,7 @@ async fn main() -> Result<(), anyhow::Error> {
                 explorer.receive(&explorer::Event::ToggleLocations, |future| {
                     queued_effects.push(future)
                 });
+                render_screen(&mut renderer, &explorer)?;
             }
             _ => {}
         }
