@@ -20,14 +20,18 @@ impl Value {
         }
     }
 
-    pub fn get_path(&self, path: &[NodePathStep]) -> &Value {
+    pub fn get_path(&self, path: &[NodePathStep]) -> ValueOrNode<'_> {
         if path.is_empty() {
             self
         } else {
             match (self, path[0]) {
                 (Self::Node(node), NodePathStep::NodeChild(_)) => node.get_path(path),
                 (Self::Array(nodes), NodePathStep::ArrayChild(index)) => {
-                    nodes[index].get_path(&path[1..])
+                    let node = &nodes[index];
+                    if path.len() == 1 {
+                        return node.into();
+                    }
+                    node.get_path(&path[1..])
                 }
                 _ => panic!("node path didn't match up"),
             }
@@ -111,13 +115,13 @@ impl Node {
         }
     }
 
-    pub fn get_path(&self, path: &[NodePathStep]) -> &Value {
+    pub fn get_path(&self, path: &[NodePathStep]) -> ValueOrNode<'_> {
         assert!(!path.is_empty());
         match path[0] {
             NodePathStep::NodeChild(index) => {
                 let child = &self.children[index];
                 if path.len() == 1 {
-                    return &child.value;
+                    return (&child.value).into();
                 }
                 child.value.get_path(&path[1..])
             }
@@ -237,10 +241,8 @@ pub fn node_path_parent_node(path: &NodePath) -> Option<NodePath> {
     let mut just_saw_array_child = matches!(path[path.len() - 1], NodePathStep::ArrayChild(_));
     for index in (0..path.len() - 1).rev() {
         if !just_saw_array_child {
-            if matches!(path[index], NodePathStep::NodeChild(_)) {
-                path.truncate(index + 1);
-                return Some(path);
-            }
+            path.truncate(index + 1);
+            return Some(path);
         }
         just_saw_array_child = matches!(path[index], NodePathStep::ArrayChild(_));
     }
@@ -251,4 +253,21 @@ pub fn node_path_parent_node(path: &NodePath) -> Option<NodePath> {
 pub enum NodePathStep {
     NodeChild(usize),
     ArrayChild(usize),
+}
+
+pub enum ValueOrNode<'a> {
+    Value(&'a Value),
+    Node(&'a Node),
+}
+
+impl<'a> From<&'a Node> for ValueOrNode<'a> {
+    fn from(value: &'a Node) -> Self {
+        Self::Node(value)
+    }
+}
+
+impl<'a> From<&'a Value> for ValueOrNode<'a> {
+    fn from(value: &'a Value) -> Self {
+        Self::Value(value)
+    }
 }
