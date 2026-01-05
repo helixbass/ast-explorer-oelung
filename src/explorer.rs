@@ -51,7 +51,13 @@ impl<'a> ComponentInterface for &'a AstExplorer {
         Ok(soft! {
             %FlexRow
               children => [
-                %EditorPanel::new(&self.source_text, self.cursor_position)
+                %EditorPanel::new(
+                    &self.source_text,
+                    self.cursor_position,
+                    self.current_zoomed_node.as_ref().map(|current_zoomed_node| {
+                        self.tree.get_path(current_zoomed_node).as_node()
+                    }),
+                )
                 %AstPanel::new(&self.tree, self.current_zoomed_node.as_ref(), self.are_locations_expanded)
               ]
               flex_grow => 1

@@ -195,6 +195,26 @@ impl Range {
             _ => false,
         }
     }
+
+    pub fn overlaps_with_line_num(&self, line_num: usize) -> bool {
+        match self.start {
+            Location::OffsetAndPosition {
+                position: start_position,
+                ..
+            } if start_position.line <= line_num => match self.end {
+                Location::OffsetAndPosition {
+                    position: end_position,
+                    ..
+                } if (line_num < end_position.line)
+                    || (line_num == end_position.line && end_position.column != 0) =>
+                {
+                    true
+                }
+                _ => false,
+            },
+            _ => false,
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug)]
