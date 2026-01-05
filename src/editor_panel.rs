@@ -25,7 +25,7 @@ impl<'a> ComponentInterface for EditorPanel<'a> {
             %FlexColumn
               children => self.source_text.lines().map(|line| -> Result<_, anyhow::Error> {
                 Ok(soft! {
-                    %Text &Cow::<'_, str>::from(line)
+                    %Text &Cow::<'_, str>::from(line)[..explorer::line_len(&line)]
                 })
               }).collect::<Result<_, _>>()?
               cursor => %Cursor.Relative

@@ -134,7 +134,7 @@ pub enum Event {
     ZoomAst,
 }
 
-fn line_len(line: &RopeSlice<'_>) -> usize {
+pub fn line_len(line: &RopeSlice<'_>) -> usize {
     let line_len = line.len_bytes();
     match line.byte(line_len - 1) {
         // \n
