@@ -22,7 +22,7 @@ impl Value {
 
     pub fn get_path(&self, path: &[NodePathStep]) -> ValueOrNode<'_> {
         if path.is_empty() {
-            self
+            self.into()
         } else {
             match (self, path[0]) {
                 (Self::Node(node), NodePathStep::NodeChild(_)) => node.get_path(path),
@@ -37,6 +37,7 @@ impl Value {
             }
         }
     }
+
     pub fn get_path_of_smallest_containing_node(
         &self,
         position: Position,
@@ -258,6 +259,15 @@ pub enum NodePathStep {
 pub enum ValueOrNode<'a> {
     Value(&'a Value),
     Node(&'a Node),
+}
+
+impl<'a> ValueOrNode<'a> {
+    pub fn as_node(&self) -> &'a Node {
+        match self {
+            Self::Value(value) => value.as_node(),
+            Self::Node(node) => node,
+        }
+    }
 }
 
 impl<'a> From<&'a Node> for ValueOrNode<'a> {

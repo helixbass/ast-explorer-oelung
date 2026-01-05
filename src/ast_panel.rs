@@ -36,7 +36,12 @@ impl<'a> ComponentInterface for AstPanel<'a> {
         Ok(soft! {
             %FlexColumn
               children => [
-                %Node::new(current_zoomed_node, 0, true, self.are_locations_expanded)
+                %Node::new(
+                    current_zoomed_node,
+                    0,
+                    true,
+                    self.are_locations_expanded,
+                )
               ]
               overflow_y => hidden
         })
