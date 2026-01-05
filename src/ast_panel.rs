@@ -5,7 +5,7 @@ use squalid::BoolExt;
 
 use crate::{ast, NodePath};
 
-const SPACES_PER_NESTING_LEVEL: usize = 4;
+const SPACES_PER_NESTING_LEVEL: usize = 2;
 
 pub struct AstPanel<'a> {
     pub tree: &'a ast::Node,
