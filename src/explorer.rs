@@ -15,6 +15,7 @@ pub struct AstExplorer {
     pub cursor_position: Position,
     pub sticky_cursor_position_column: Option<u16>,
     pub current_zoomed_node: Option<NodePath>,
+    pub are_locations_expanded: bool,
 }
 
 impl AstExplorer {
@@ -27,6 +28,7 @@ impl AstExplorer {
             cursor_position: Position { row: 0, column: 0 },
             sticky_cursor_position_column: _d(),
             current_zoomed_node: _d(),
+            are_locations_expanded: true,
         })
     }
 
@@ -48,7 +50,7 @@ impl<'a> ComponentInterface for &'a AstExplorer {
             %FlexRow
               children => [
                 %EditorPanel::new(&self.source_text, self.cursor_position)
-                %AstPanel::new(&self.tree, self.current_zoomed_node.as_ref())
+                %AstPanel::new(&self.tree, self.current_zoomed_node.as_ref(), self.are_locations_expanded)
               ]
               flex_grow => 1
         })
@@ -111,6 +113,9 @@ impl ReceiveEvent<Event> for AstExplorer {
                     _d(),
                 );
             }
+            Event::ToggleLocations => {
+                self.are_locations_expanded = !self.are_locations_expanded;
+            }
         }
     }
 }
@@ -132,6 +137,7 @@ pub enum CursorMovement {
 pub enum Event {
     CursorMovement(CursorMovement),
     ZoomAst,
+    ToggleLocations,
 }
 
 pub fn line_len(line: &RopeSlice<'_>) -> usize {

@@ -10,13 +10,19 @@ const SPACES_PER_NESTING_LEVEL: usize = 2;
 pub struct AstPanel<'a> {
     pub tree: &'a ast::Node,
     pub current_zoomed_node: Option<&'a NodePath>,
+    pub are_locations_expanded: bool,
 }
 
 impl<'a> AstPanel<'a> {
-    pub fn new(tree: &'a ast::Node, current_zoomed_node: Option<&'a NodePath>) -> Self {
+    pub fn new(
+        tree: &'a ast::Node,
+        current_zoomed_node: Option<&'a NodePath>,
+        are_locations_expanded: bool,
+    ) -> Self {
         Self {
             tree,
             current_zoomed_node,
+            are_locations_expanded,
         }
     }
 }
@@ -30,7 +36,7 @@ impl<'a> ComponentInterface for AstPanel<'a> {
         Ok(soft! {
             %FlexColumn
               children => [
-                %Node::new(current_zoomed_node, 0, true)
+                %Node::new(current_zoomed_node, 0, true, self.are_locations_expanded)
               ]
               overflow_y => hidden
         })
@@ -45,6 +51,7 @@ pub struct Node<'a> {
     pub node: &'a ast::Node,
     pub nesting_level: usize,
     pub should_print_top_and_bottom_lines: bool,
+    pub are_locations_expanded: bool,
 }
 
 impl<'a> Node<'a> {
@@ -52,11 +59,13 @@ impl<'a> Node<'a> {
         node: &'a ast::Node,
         nesting_level: usize,
         should_print_top_and_bottom_lines: bool,
+        are_locations_expanded: bool,
     ) -> Self {
         Self {
             node,
             nesting_level,
             should_print_top_and_bottom_lines,
+            are_locations_expanded,
         }
     }
 }

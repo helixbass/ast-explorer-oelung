@@ -3,7 +3,7 @@ use std::pin::Pin;
 use crossterm::event::{Event, EventStream, KeyCode};
 use indoc::indoc;
 use oelung::{soft, Renderer};
-use oelung_lantern::{generate_sender, mpsc::Sender, ReceiveEvent};
+use oelung_lantern::{generate_sender, is_ctrl_char_press, mpsc::Sender, ReceiveEvent};
 use ropey::Rope;
 use tokio::sync::mpsc::channel;
 use tokio_stream::StreamExt;
@@ -82,6 +82,11 @@ async fn main() -> Result<(), anyhow::Error> {
                     queued_effects.push(future)
                 });
                 render_screen(&mut renderer, &explorer)?;
+            }
+            World::Crossterm(event) if is_ctrl_char_press(&event, 's') => {
+                explorer.receive(&explorer::Event::ToggleLocations, |future| {
+                    queued_effects.push(future)
+                });
             }
             _ => {}
         }
