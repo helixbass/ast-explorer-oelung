@@ -74,7 +74,7 @@ impl ReceiveEvent<Event> for AstExplorer {
         &mut self,
         event: &Event,
         _queue_effect: TQueueEffect,
-    ) {
+    ) -> Result<(), anyhow::Error> {
         match event {
             Event::CursorMovement(CursorMovement::Up) => {
                 if self.cursor_position.row > 0 {
@@ -130,6 +130,8 @@ impl ReceiveEvent<Event> for AstExplorer {
                 }
             }
         }
+
+        Ok(())
     }
 }
 

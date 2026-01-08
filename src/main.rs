@@ -2,7 +2,7 @@ use std::pin::Pin;
 
 use crossterm::event::{Event, EventStream, KeyCode};
 use indoc::indoc;
-use oelung::{soft, Renderer};
+use oelung::{soft, Renderer, RendererBuilder};
 use oelung_lantern::{generate_sender, is_ctrl_char_press, mpsc::Sender, ReceiveEvent};
 use ropey::Rope;
 use tokio::sync::mpsc::channel;
@@ -15,7 +15,7 @@ use ast_explorer_oelung::{
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
-    let mut renderer = Renderer::try_new()?;
+    let mut renderer = RendererBuilder::default().build()?;
 
     let (sender, mut receiver) = channel::<World>(100);
 
@@ -53,46 +53,46 @@ async fn main() -> Result<(), anyhow::Error> {
                 explorer.receive(
                     &explorer::Event::CursorMovement(CursorMovement::Down),
                     |future| queued_effects.push(future),
-                );
+                )?;
                 render_screen(&mut renderer, &explorer)?;
             }
             World::Crossterm(Event::Key(key)) if key.code == KeyCode::Char('k') => {
                 explorer.receive(
                     &explorer::Event::CursorMovement(CursorMovement::Up),
                     |future| queued_effects.push(future),
-                );
+                )?;
                 render_screen(&mut renderer, &explorer)?;
             }
             World::Crossterm(Event::Key(key)) if key.code == KeyCode::Char('l') => {
                 explorer.receive(
                     &explorer::Event::CursorMovement(CursorMovement::Right),
                     |future| queued_effects.push(future),
-                );
+                )?;
                 render_screen(&mut renderer, &explorer)?;
             }
             World::Crossterm(Event::Key(key)) if key.code == KeyCode::Char('h') => {
                 explorer.receive(
                     &explorer::Event::CursorMovement(CursorMovement::Left),
                     |future| queued_effects.push(future),
-                );
+                )?;
                 render_screen(&mut renderer, &explorer)?;
             }
             World::Crossterm(Event::Key(key)) if key.code == KeyCode::Enter => {
                 explorer.receive(&explorer::Event::ZoomAst, |future| {
                     queued_effects.push(future)
-                });
+                })?;
                 render_screen(&mut renderer, &explorer)?;
             }
             World::Crossterm(event) if is_ctrl_char_press(&event, 's') => {
                 explorer.receive(&explorer::Event::ToggleLocations, |future| {
                     queued_effects.push(future)
-                });
+                })?;
                 render_screen(&mut renderer, &explorer)?;
             }
             World::Crossterm(event) if is_ctrl_char_press(&event, 'u') => {
                 explorer.receive(&explorer::Event::PopZoomedAst, |future| {
                     queued_effects.push(future)
-                });
+                })?;
                 render_screen(&mut renderer, &explorer)?;
             }
             _ => {}

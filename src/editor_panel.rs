@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use crossterm::style::Color;
 use oelung::{anyhow, soft, Component, ComponentInterface, Grid};
 use ropey::{Rope, RopeSlice};
 
@@ -66,21 +67,21 @@ impl<'a> EditorPanel<'a> {
                 (None, None) => soft! {
                     %Text
                       text => &line
-                      background_color => Ansi(94)
+                      background_color => Color::AnsiValue(94)
                 },
                 (Some(start), None) => soft! {
                     %Text children => [
                       %Text &line[..start]
                       %Text
                         text => &line[start..]
-                        background_color => Ansi(94)
+                        background_color => Color::AnsiValue(94)
                     ]
                 },
                 (None, Some(end)) => soft! {
                     %Text children => [
                       %Text
                         text => &line[..end]
-                        background_color => Ansi(94)
+                        background_color => Color::AnsiValue(94)
                       %Text &line[end..]
                     ]
                 },
@@ -89,7 +90,7 @@ impl<'a> EditorPanel<'a> {
                       %Text &line[..start]
                       %Text
                         text => &line[start..end]
-                        background_color => Ansi(94)
+                        background_color => Color::AnsiValue(94)
                       %Text &line[end..]
                     ]
                 },
