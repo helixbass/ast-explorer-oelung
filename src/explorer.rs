@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::fmt;
 use std::pin::Pin;
 
@@ -12,11 +13,12 @@ use washtank::{editor, ConfigBuilder, Editor, EventAggregator, InitialFile};
 use crate::{ast, node_path_parent_node, syn::Parser, AstPanel, Error, Node, NodePath, Parse};
 
 pub struct AstExplorer {
-    pub tree: Node,
+    pub tree: Result<Node, Error>,
     pub editor: Editor,
     pub current_zoomed_node: Option<NodePath>,
     pub are_locations_expanded: bool,
     pub editor_aggregator: EventAggregator,
+    pub parser: Box<dyn Parse>,
 }
 
 impl AstExplorer {
@@ -25,8 +27,8 @@ impl AstExplorer {
         editor_sender: Box<dyn Sender<editor::Happened>>,
         size: Size,
     ) -> Result<Self, Error> {
-        let parser = Parser::new();
-        let tree = parser.parse(&text)?;
+        let parser = Box::new(Parser::new());
+        let tree = parser.parse(&text);
         let config = ConfigBuilder::default()
             .initial_file(InitialFile::Anonymous(text))
             .flex_grow(1.0)
@@ -36,6 +38,7 @@ impl AstExplorer {
             .unwrap();
         Ok(Self {
             tree,
+            parser,
             editor: Editor::try_new(&config, editor_sender, size)
                 .await
                 .map_err(|err| Error::Washtank(err.to_smolstr()))?,
@@ -43,6 +46,16 @@ impl AstExplorer {
             are_locations_expanded: true,
             editor_aggregator: EventAggregator::new(&config),
         })
+    }
+
+    pub fn re_parse(&mut self) {
+        self.tree = self
+            .parser
+            .parse(&Cow::<'_, str>::from(self.editor.current_file.rope()));
+    }
+
+    pub fn tree(&self) -> &Node {
+        self.tree.as_ref().unwrap()
     }
 }
 
@@ -71,7 +84,7 @@ impl ReceiveEvent<Event> for AstExplorer {
     ) -> Result<(), anyhow::Error> {
         match event {
             Event::ZoomAst => {
-                self.current_zoomed_node = self.tree.get_path_of_smallest_containing_node(
+                self.current_zoomed_node = self.tree().get_path_of_smallest_containing_node(
                     ast::Position {
                         line: usize::from(self.editor.cursor_position.row),
                         column: usize::from(self.editor.cursor_position.column),

@@ -3,19 +3,19 @@ use smallvec::SmallVec;
 use smol_str::{SmolStr, SmolStrBuilder};
 use squalid::BoolExt;
 
-use crate::{ast, NodePath};
+use crate::{ast, Error, NodePath};
 
 const SPACES_PER_NESTING_LEVEL: usize = 2;
 
 pub struct AstPanel<'a> {
-    pub tree: &'a ast::Node,
+    pub tree: &'a Result<ast::Node, Error>,
     pub current_zoomed_node: Option<&'a NodePath>,
     pub are_locations_expanded: bool,
 }
 
 impl<'a> AstPanel<'a> {
     pub fn new(
-        tree: &'a ast::Node,
+        tree: &'a Result<ast::Node, Error>,
         current_zoomed_node: Option<&'a NodePath>,
         are_locations_expanded: bool,
     ) -> Self {
@@ -29,21 +29,28 @@ impl<'a> AstPanel<'a> {
 
 impl<'a> ComponentInterface for AstPanel<'a> {
     fn render(&self, _grid: Grid) -> Result<Component<'_>, anyhow::Error> {
-        let current_zoomed_node = match self.current_zoomed_node {
-            None => self.tree,
-            Some(current_zoomed_node) => self.tree.get_path(current_zoomed_node).as_node(),
-        };
-        Ok(soft! {
-            %FlexColumn
-              children => [
-                %Node::new(
-                    current_zoomed_node,
-                    0,
-                    true,
-                    self.are_locations_expanded,
-                )
-              ]
-              overflow_y => hidden
+        Ok(match self.tree {
+            Ok(tree) => {
+                let current_zoomed_node = match self.current_zoomed_node {
+                    None => tree,
+                    Some(current_zoomed_node) => tree.get_path(current_zoomed_node).as_node(),
+                };
+                soft! {
+                    %FlexColumn
+                      children => [
+                        %Node::new(
+                            current_zoomed_node,
+                            0,
+                            true,
+                            self.are_locations_expanded,
+                        )
+                      ]
+                      overflow_y => hidden
+                }
+            }
+            Err(_) => soft! {
+                %Text "error"
+            },
         })
     }
 
