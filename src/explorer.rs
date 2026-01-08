@@ -31,6 +31,7 @@ impl AstExplorer {
             .initial_file(InitialFile::Anonymous(text))
             .flex_grow(1.0)
             .disallow_folding(true)
+            .disallow_ex_command_mode(true)
             .build()
             .unwrap();
         Ok(Self {
