@@ -27,22 +27,20 @@ impl AstExplorer {
     ) -> Result<Self, Error> {
         let parser = Parser::new();
         let tree = parser.parse(&text)?;
+        let config = ConfigBuilder::default()
+            .initial_file(InitialFile::Anonymous(text))
+            .flex_grow(1.0)
+            .disallow_folding(true)
+            .build()
+            .unwrap();
         Ok(Self {
             tree,
-            editor: Editor::try_new(
-                &ConfigBuilder::default()
-                    .initial_file(InitialFile::Anonymous(text))
-                    .flex_grow(1.0)
-                    .build()
-                    .unwrap(),
-                editor_sender,
-                size,
-            )
-            .await
-            .map_err(|err| Error::Washtank(err.to_smolstr()))?,
+            editor: Editor::try_new(&config, editor_sender, size)
+                .await
+                .map_err(|err| Error::Washtank(err.to_smolstr()))?,
             current_zoomed_node: _d(),
             are_locations_expanded: true,
-            editor_aggregator: _d(),
+            editor_aggregator: EventAggregator::new(&config),
         })
     }
 }
