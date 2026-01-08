@@ -1,48 +1,47 @@
-use std::borrow::Cow;
+use std::fmt;
 use std::pin::Pin;
 
-use oelung::{anyhow, soft, Component, ComponentInterface, Grid};
-use oelung_lantern::ReceiveEvent;
-use ropey::{Rope, RopeSlice};
+use crossterm::event;
+use oelung::{anyhow, soft, Component, ComponentInterface, Grid, Size};
+use oelung_lantern::{mpsc::Sender, ReceiveEvent};
+use ropey::RopeSlice;
+use smol_str::ToSmolStr;
 use squalid::_d;
+use washtank::{editor, Args, Editor, EventAggregator};
 
-use crate::{
-    ast, node_path_parent_node, syn::Parser, AstPanel, EditorPanel, Error, Node, NodePath, Parse,
-};
+use crate::{ast, node_path_parent_node, syn::Parser, AstPanel, Error, Node, NodePath, Parse};
 
-#[derive(Debug)]
 pub struct AstExplorer {
     pub tree: Node,
-    pub source_text: Rope,
-    pub cursor_position: Position,
-    pub sticky_cursor_position_column: Option<u16>,
+    pub editor: Editor,
     pub current_zoomed_node: Option<NodePath>,
     pub are_locations_expanded: bool,
+    pub editor_aggregator: EventAggregator,
 }
 
 impl AstExplorer {
-    pub fn try_new(text: Rope) -> Result<Self, Error> {
+    pub async fn try_new(
+        text: &str,
+        editor_sender: Box<dyn Sender<editor::Happened>>,
+        size: Size,
+    ) -> Result<Self, Error> {
         let parser = Parser::new();
-        let tree = parser.parse(&Cow::<'_, str>::from(&text))?;
+        let tree = parser.parse(text)?;
         Ok(Self {
             tree,
-            source_text: text,
-            cursor_position: Position { row: 0, column: 0 },
-            sticky_cursor_position_column: _d(),
+            editor: Editor::try_new(
+                Args {
+                    file_name: "whee.rs".into(),
+                },
+                editor_sender,
+                size,
+            )
+            .await
+            .map_err(|err| Error::Washtank(err.to_smolstr()))?,
             current_zoomed_node: _d(),
             are_locations_expanded: true,
+            editor_aggregator: _d(),
         })
-    }
-
-    fn max_allowed_column(&self) -> u16 {
-        match line_len(&self.source_text.line(usize::from(self.cursor_position.row))) {
-            0 => 0,
-            line_len => u16::try_from(line_len).unwrap() - 1,
-        }
-    }
-
-    fn remember_sticky_cursor_position_column(&mut self) {
-        self.sticky_cursor_position_column = Some(self.cursor_position.column);
     }
 }
 
@@ -51,13 +50,7 @@ impl<'a> ComponentInterface for &'a AstExplorer {
         Ok(soft! {
             %FlexRow
               children => [
-                %EditorPanel::new(
-                    &self.source_text,
-                    self.cursor_position,
-                    self.current_zoomed_node.as_ref().map(|current_zoomed_node| {
-                        self.tree.get_path(current_zoomed_node).as_node()
-                    }),
-                )
+                %&self.editor
                 %AstPanel::new(&self.tree, self.current_zoomed_node.as_ref(), self.are_locations_expanded)
               ]
               flex_grow => 1
@@ -73,50 +66,14 @@ impl ReceiveEvent<Event> for AstExplorer {
     fn receive<TQueueEffect: FnMut(Pin<Box<dyn Future<Output = ()> + Send + 'static>>)>(
         &mut self,
         event: &Event,
-        _queue_effect: TQueueEffect,
+        mut queue_effect: TQueueEffect,
     ) -> Result<(), anyhow::Error> {
         match event {
-            Event::CursorMovement(CursorMovement::Up) => {
-                if self.cursor_position.row > 0 {
-                    self.cursor_position.row -= 1;
-                    if let Some(sticky_cursor_position_column) = self.sticky_cursor_position_column
-                    {
-                        self.cursor_position.column = sticky_cursor_position_column;
-                    }
-                    if self.cursor_position.column > self.max_allowed_column() {
-                        self.cursor_position.column = self.max_allowed_column();
-                    }
-                }
-            }
-            Event::CursorMovement(CursorMovement::Down) => {
-                if usize::from(self.cursor_position.row) < self.source_text.len_lines() - 1 {
-                    self.cursor_position.row += 1;
-                    if let Some(sticky_cursor_position_column) = self.sticky_cursor_position_column
-                    {
-                        self.cursor_position.column = sticky_cursor_position_column;
-                    }
-                    if self.cursor_position.column > self.max_allowed_column() {
-                        self.cursor_position.column = self.max_allowed_column();
-                    }
-                }
-            }
-            Event::CursorMovement(CursorMovement::Left) => {
-                if self.cursor_position.column > 0 {
-                    self.cursor_position.column -= 1;
-                    self.remember_sticky_cursor_position_column();
-                }
-            }
-            Event::CursorMovement(CursorMovement::Right) => {
-                if self.cursor_position.column < self.max_allowed_column() {
-                    self.cursor_position.column += 1;
-                    self.remember_sticky_cursor_position_column();
-                }
-            }
             Event::ZoomAst => {
                 self.current_zoomed_node = self.tree.get_path_of_smallest_containing_node(
                     ast::Position {
-                        line: usize::from(self.cursor_position.row),
-                        column: usize::from(self.cursor_position.column),
+                        line: usize::from(self.editor.cursor_position.row),
+                        column: usize::from(self.editor.cursor_position.column),
                     },
                     _d(),
                 );
@@ -129,9 +86,29 @@ impl ReceiveEvent<Event> for AstExplorer {
                     self.current_zoomed_node = node_path_parent_node(current_zoomed_node);
                 }
             }
+            Event::Crossterm(event) => {
+                let editor_event = self
+                    .editor_aggregator
+                    .receive(event, |future| queue_effect(future))?;
+                if let Some(editor_event) = editor_event {
+                    self.editor
+                        .receive(&editor_event, |future| queue_effect(future))?;
+                }
+            }
         }
 
         Ok(())
+    }
+}
+
+impl fmt::Debug for AstExplorer {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("AstExplorer")
+            .field("tree", &self.tree)
+            // .field("editor", &self.editor)
+            .field("current_zoomed_node", &self.current_zoomed_node)
+            .field("are_locations_expanded", &self.are_locations_expanded)
+            .finish()
     }
 }
 
@@ -141,19 +118,11 @@ pub struct Position {
     pub column: u16,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub enum CursorMovement {
-    Up,
-    Down,
-    Left,
-    Right,
-}
-
 pub enum Event {
-    CursorMovement(CursorMovement),
     ZoomAst,
     ToggleLocations,
     PopZoomedAst,
+    Crossterm(event::Event),
 }
 
 pub fn line_len(line: &RopeSlice<'_>) -> usize {

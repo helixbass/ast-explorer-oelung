@@ -2,16 +2,13 @@ use std::pin::Pin;
 
 use crossterm::event::{Event, EventStream, KeyCode};
 use indoc::indoc;
-use oelung::{soft, Renderer, RendererBuilder};
+use oelung::{soft, BackendInterface, Renderer, RendererBuilder};
 use oelung_lantern::{generate_sender, is_ctrl_char_press, mpsc::Sender, ReceiveEvent};
-use ropey::Rope;
 use tokio::sync::mpsc::channel;
 use tokio_stream::StreamExt;
+use washtank::editor;
 
-use ast_explorer_oelung::{
-    explorer::{self, CursorMovement},
-    AstExplorer,
-};
+use ast_explorer_oelung::{explorer, AstExplorer};
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
@@ -39,7 +36,12 @@ async fn main() -> Result<(), anyhow::Error> {
             }
         "#
     ));
-    let mut explorer = AstExplorer::try_new(Rope::from_str(text))?;
+    let mut explorer = AstExplorer::try_new(
+        text,
+        Box::new(EditorSender::from(sender.clone())),
+        renderer.backend.size()?,
+    )
+    .await?;
 
     render_screen(&mut renderer, &explorer)?;
 
@@ -48,34 +50,6 @@ async fn main() -> Result<(), anyhow::Error> {
         match world {
             World::Crossterm(Event::Key(key)) if key.code == KeyCode::Char('q') => {
                 break;
-            }
-            World::Crossterm(Event::Key(key)) if key.code == KeyCode::Char('j') => {
-                explorer.receive(
-                    &explorer::Event::CursorMovement(CursorMovement::Down),
-                    |future| queued_effects.push(future),
-                )?;
-                render_screen(&mut renderer, &explorer)?;
-            }
-            World::Crossterm(Event::Key(key)) if key.code == KeyCode::Char('k') => {
-                explorer.receive(
-                    &explorer::Event::CursorMovement(CursorMovement::Up),
-                    |future| queued_effects.push(future),
-                )?;
-                render_screen(&mut renderer, &explorer)?;
-            }
-            World::Crossterm(Event::Key(key)) if key.code == KeyCode::Char('l') => {
-                explorer.receive(
-                    &explorer::Event::CursorMovement(CursorMovement::Right),
-                    |future| queued_effects.push(future),
-                )?;
-                render_screen(&mut renderer, &explorer)?;
-            }
-            World::Crossterm(Event::Key(key)) if key.code == KeyCode::Char('h') => {
-                explorer.receive(
-                    &explorer::Event::CursorMovement(CursorMovement::Left),
-                    |future| queued_effects.push(future),
-                )?;
-                render_screen(&mut renderer, &explorer)?;
             }
             World::Crossterm(Event::Key(key)) if key.code == KeyCode::Enter => {
                 explorer.receive(&explorer::Event::ZoomAst, |future| {
@@ -95,7 +69,13 @@ async fn main() -> Result<(), anyhow::Error> {
                 })?;
                 render_screen(&mut renderer, &explorer)?;
             }
-            _ => {}
+            World::Crossterm(event) => {
+                explorer.receive(&explorer::Event::Crossterm(event), |future| {
+                    queued_effects.push(future)
+                })?;
+                render_screen(&mut renderer, &explorer)?;
+            }
+            World::Editor(editor::Happened::Quit) => unreachable!(),
         }
         for effect in queued_effects {
             tokio::spawn(effect);
@@ -115,9 +95,11 @@ fn render_screen(renderer: &mut Renderer, explorer: &AstExplorer) -> Result<(), 
 
 enum World {
     Crossterm(Event),
+    Editor(editor::Happened),
 }
 
 generate_sender!(World, Crossterm, Event);
+generate_sender!(World, Editor, editor::Happened);
 
 fn listen_to_crossterm_events(sender: CrosstermSender) {
     tokio::spawn(async move {
