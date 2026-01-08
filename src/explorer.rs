@@ -107,6 +107,9 @@ impl ReceiveEvent<Event> for AstExplorer {
                 if let Some(editor_event) = editor_event {
                     self.editor
                         .receive(&editor_event, |future| queue_effect(future))?;
+                    if editor_event.is_file_contents_mutating() {
+                        self.re_parse();
+                    }
                 }
             }
         }
