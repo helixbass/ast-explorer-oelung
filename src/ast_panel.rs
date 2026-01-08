@@ -48,8 +48,11 @@ impl<'a> ComponentInterface for AstPanel<'a> {
                       overflow_y => hidden
                 }
             }
-            Err(_) => soft! {
-                %Text "error"
+            Err(err) => soft! {
+                %Text children => [
+                  %Text "error: "
+                  %Text err
+                ]
             },
         })
     }
