@@ -7,7 +7,7 @@ use oelung_lantern::{mpsc::Sender, ReceiveEvent};
 use ropey::RopeSlice;
 use smol_str::ToSmolStr;
 use squalid::_d;
-use washtank::{editor, Args, Editor, EventAggregator};
+use washtank::{editor, ConfigBuilder, Editor, EventAggregator, InitialFile};
 
 use crate::{ast, node_path_parent_node, syn::Parser, AstPanel, Error, Node, NodePath, Parse};
 
@@ -21,18 +21,20 @@ pub struct AstExplorer {
 
 impl AstExplorer {
     pub async fn try_new(
-        text: &str,
+        text: String,
         editor_sender: Box<dyn Sender<editor::Happened>>,
         size: Size,
     ) -> Result<Self, Error> {
         let parser = Parser::new();
-        let tree = parser.parse(text)?;
+        let tree = parser.parse(&text)?;
         Ok(Self {
             tree,
             editor: Editor::try_new(
-                Args {
-                    file_name: "whee.rs".into(),
-                },
+                &ConfigBuilder::default()
+                    .initial_file(InitialFile::Anonymous(text))
+                    .flex_grow(1.0)
+                    .build()
+                    .unwrap(),
                 editor_sender,
                 size,
             )

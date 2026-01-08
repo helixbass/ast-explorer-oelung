@@ -37,7 +37,7 @@ async fn main() -> Result<(), anyhow::Error> {
         "#
     ));
     let mut explorer = AstExplorer::try_new(
-        text,
+        text.to_owned(),
         Box::new(EditorSender::from(sender.clone())),
         renderer.backend.size()?,
     )
