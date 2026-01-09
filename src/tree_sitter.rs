@@ -32,7 +32,7 @@ impl<'a> From<tree_sitter::Node<'a>> for Value {
                             NodeChild::new(
                                 value
                                     .field_name_for_child(u32::try_from(child_index).unwrap())
-                                    .unwrap_or(child.kind())
+                                    .unwrap_or("_")
                                     .to_smolstr(),
                                 child.into(),
                             )
