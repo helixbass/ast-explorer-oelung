@@ -26,7 +26,7 @@ impl AstExplorer {
         text: String,
         editor_sender: Box<dyn Sender<editor::Happened>>,
         size: Size,
-        parser: Box<dyn Parse>,
+        mut parser: Box<dyn Parse>,
     ) -> Result<Self, Error> {
         let tree = parser.parse(&text);
         let config = ConfigBuilder::default()
