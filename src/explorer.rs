@@ -10,7 +10,7 @@ use smol_str::ToSmolStr;
 use squalid::_d;
 use washtank::{editor, ConfigBuilder, Editor, EventAggregator, InitialFile};
 
-use crate::{ast, node_path_parent_node, syn::Parser, AstPanel, Error, Node, NodePath, Parse};
+use crate::{ast, node_path_parent_node, AstPanel, Error, Node, NodePath, Parse};
 
 pub struct AstExplorer {
     pub tree: Result<Node, Error>,
@@ -26,8 +26,8 @@ impl AstExplorer {
         text: String,
         editor_sender: Box<dyn Sender<editor::Happened>>,
         size: Size,
+        parser: Box<dyn Parse>,
     ) -> Result<Self, Error> {
-        let parser = Box::new(Parser::new());
         let tree = parser.parse(&text);
         let config = ConfigBuilder::default()
             .initial_file(InitialFile::Anonymous(text))

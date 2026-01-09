@@ -8,7 +8,7 @@ use tokio::sync::mpsc::channel;
 use tokio_stream::StreamExt;
 use washtank::editor;
 
-use ast_explorer_oelung::{explorer, AstExplorer};
+use ast_explorer_oelung::{explorer, syn::Parser, AstExplorer};
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
@@ -40,6 +40,7 @@ async fn main() -> Result<(), anyhow::Error> {
         text.to_owned(),
         Box::new(EditorSender::from(sender.clone())),
         renderer.backend.size()?,
+        Box::new(Parser::new()),
     )
     .await?;
 
