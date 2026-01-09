@@ -249,7 +249,7 @@ impl Ord for Position {
 }
 
 pub trait Parse {
-    fn parse(&self, text: &str) -> Result<Node, Error>;
+    fn parse(&mut self, text: &str) -> Result<Node, Error>;
 }
 
 pub type NodePath = SmallVec<NodePathStep, 10>;

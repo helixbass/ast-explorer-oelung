@@ -19,4 +19,6 @@ syn = { version = "2.0.112", features = ["full"] }
 thiserror = "2.0.17"
 tokio = "1.49.0"
 tokio-stream = "0.1.17"
+tree-sitter = "0.26.3"
+tree-sitter-rust = "0.24.0"
 washtank = { path = "../washtank" }

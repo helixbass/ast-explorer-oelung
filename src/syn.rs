@@ -1312,7 +1312,7 @@ impl Parser {
 }
 
 impl Parse for Parser {
-    fn parse(&self, text: &str) -> Result<Node, Error> {
+    fn parse(&mut self, text: &str) -> Result<Node, Error> {
         Ok(Node::from(
             &syn::parse_file(text).map_err(|err| Error::Parse(err.to_smolstr()))?,
         ))
