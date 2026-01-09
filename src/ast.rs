@@ -20,6 +20,13 @@ impl Value {
         }
     }
 
+    pub fn into_node(self) -> Node {
+        match self {
+            Self::Node(node) => node,
+            _ => panic!("expected node"),
+        }
+    }
+
     pub fn get_path(&self, path: &[NodePathStep]) -> ValueOrNode<'_> {
         if path.is_empty() {
             self.into()
