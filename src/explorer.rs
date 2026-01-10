@@ -71,6 +71,10 @@ impl AstExplorer {
                     self.tree().get_path(current_zoomed_node).as_node().range
                 })
         else {
+            self.editor
+                .receive(&editor::Event::UnhighlightRange, |future| {
+                    queue_effect(future)
+                })?;
             return Ok(());
         };
 
@@ -131,6 +135,7 @@ impl ReceiveEvent<Event> for AstExplorer {
                 if let Some(current_zoomed_node) = self.current_zoomed_node.as_ref() {
                     self.current_zoomed_node = node_path_parent_node(current_zoomed_node);
                 }
+                self.tell_editor_to_highlight_zoomed_node(|future| queue_effect(future))?;
             }
             Event::Crossterm(event) => {
                 let editor_event = self
