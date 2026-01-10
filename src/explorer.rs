@@ -10,7 +10,7 @@ use smol_str::ToSmolStr;
 use squalid::_d;
 use washtank::{editor, ConfigBuilder, Editor, EventAggregator, InitialFile};
 
-use crate::{ast, node_path_parent_node, AstPanel, Error, Node, NodePath, Parse};
+use crate::{ast, node_path_parent_node, AstPanel, Error, Location, Node, NodePath, Parse};
 
 pub struct AstExplorer {
     pub tree: Result<Node, Error>,
@@ -57,6 +57,37 @@ impl AstExplorer {
     pub fn tree(&self) -> &Node {
         self.tree.as_ref().unwrap()
     }
+
+    fn tell_editor_to_highlight_zoomed_node<
+        TQueueEffect: FnMut(Pin<Box<dyn Future<Output = ()> + Send + 'static>>),
+    >(
+        &mut self,
+        mut queue_effect: TQueueEffect,
+    ) -> Result<(), anyhow::Error> {
+        let Some(zoomed_node_range) =
+            self.current_zoomed_node
+                .as_ref()
+                .and_then(|current_zoomed_node| {
+                    self.tree().get_path(current_zoomed_node).as_node().range
+                })
+        else {
+            return Ok(());
+        };
+
+        self.editor.receive(
+            &editor::Event::HighlightRange(editor::Range {
+                start: match zoomed_node_range.start {
+                    Location::OffsetAndPosition { offset, .. } => offset,
+                },
+                end: match zoomed_node_range.end {
+                    Location::OffsetAndPosition { offset, .. } => offset,
+                },
+            }),
+            |future| queue_effect(future),
+        )?;
+
+        Ok(())
+    }
 }
 
 impl<'a> ComponentInterface for &'a AstExplorer {
@@ -91,6 +122,7 @@ impl ReceiveEvent<Event> for AstExplorer {
                     },
                     _d(),
                 );
+                self.tell_editor_to_highlight_zoomed_node(|future| queue_effect(future))?;
             }
             Event::ToggleLocations => {
                 self.are_locations_expanded = !self.are_locations_expanded;
