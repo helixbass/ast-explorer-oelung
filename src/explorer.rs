@@ -149,6 +149,10 @@ impl ReceiveEvent<Event> for AstExplorer {
                     }
                 }
             }
+            Event::Editor(editor_happened) => {
+                self.editor
+                    .receive(editor_happened, |future| queue_effect(future))?;
+            }
         }
 
         Ok(())
@@ -177,6 +181,7 @@ pub enum Event {
     ToggleLocations,
     PopZoomedAst,
     Crossterm(event::Event),
+    Editor(editor::Happened),
 }
 
 pub fn line_len(line: &RopeSlice<'_>) -> usize {

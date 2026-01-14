@@ -84,6 +84,12 @@ async fn main() -> Result<(), anyhow::Error> {
                 render_screen(&mut renderer, &explorer)?;
             }
             World::Editor(editor::Happened::Quit) => unreachable!(),
+            World::Editor(editor_happened) => {
+                explorer.receive(&explorer::Event::Editor(editor_happened), |future| {
+                    queued_effects.push(future)
+                })?;
+                render_screen(&mut renderer, &explorer)?;
+            }
         }
         for effect in queued_effects {
             tokio::spawn(effect);
